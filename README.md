@@ -53,3 +53,7 @@ FUTURE PLANS:
   Work on 'setdelay', as I don't actually have a function implemented yet. The default is currently 15 minutes.
 
   Add an auto-clear of the queue after all files have been downloaded, so users don't have to do it manually.
+
+>[!NOTE]
+>This program uses the yt-dlp github repository, and is vulnerable to any and all issues present within. Any issues with yt-dlp will **MOST LIKLEY** carry over to this program, thus performance
+>cannot be guarenteed. For best results, use known-working options. Any issues outside of this are not my fault/problem, and will **NOT** be addressed.
