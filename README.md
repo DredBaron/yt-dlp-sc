@@ -58,8 +58,6 @@ FUTURE PLANS:
 
   Add an auto-clear of the queue after all files have been downloaded, so users don't have to do it manually.
 
-  Set a temporary directory option, as combining all the fragments and audio takes a lot longer on HDD's. Setting a temporary folder in ~ could allow the files to be downloaded and merged faster, then moved to the proper download folder.
-
 >[!NOTE]
 >This program uses the [yt-dlp](https://github.com/yt-dlp/yt-dlp) github repository, and is vulnerable to any and all issues present within. Any issues with yt-dlp will **MOST LIKLEY** carry over to this program, thus performance
 >cannot be guarenteed. For best results, use known-working options. Any issues which result from not following this recommendation are not my fault/problem, and will **NOT** be addressed.
