@@ -33,7 +33,7 @@ if not os.path.exists(config_file_path):
 
 def set_temp_folder_option(temp_option):
     options_file = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
-    
+    global use_temp_folder
     if temp_option.lower() == "y":
         use_temp_folder = "y"
     elif temp_option.lower() == "n":
@@ -140,8 +140,38 @@ def save_queue():
 
 # Clear the download queue
 def clear_queue():
-    open(queue_file_path, 'w').close()  # Clear the file
+    yt_dlp_folder = os.path.expanduser('~/yt-dlp-sc/')
+    temp_folder = os.path.join(yt_dlp_folder, 'temp/')
+    archive_file = os.path.join(yt_dlp_folder, 'downloaded_videos.txt')
+    
+    # Clear the queue file
+    open(queue_file_path, 'w').close()  # Clear the queue file
     print("Download queue cleared.")
+    
+    # Remove all files in the yt-dlp-sc folder
+    if os.path.exists(yt_dlp_folder):
+        for root, dirs, files in os.walk(yt_dlp_folder, topdown=False):
+            for name in files:
+                file_path = os.path.join(root, name)
+                print(f"Deleting file: {file_path}")
+                os.remove(file_path)  # Delete each file
+            for name in dirs:
+                dir_path = os.path.join(root, name)
+                print(f"Deleting directory: {dir_path}")
+                shutil.rmtree(dir_path)  # Delete each directory
+        print(f"All contents in {yt_dlp_folder} deleted.")
+    else:
+        print(f"{yt_dlp_folder} does not exist.")
+    
+    # Ensure the yt-dlp-sc folder itself is empty
+    if os.path.exists(temp_folder):
+        shutil.rmtree(temp_folder)  # Delete temp folder
+        print(f"Temporary folder {temp_folder} deleted.")
+    
+    # Delete the archive file
+    if os.path.exists(archive_file):
+        os.remove(archive_file)  # Delete archive file
+        print(f"Archive file {archive_file} deleted.")
 
 def show_help():
     help_text = """
@@ -223,7 +253,7 @@ def download_queue():
     use_temp_folder = options.get("use_temp_folder", "n").lower() == "y"  # Check if temp folder is enabled
 
     # Define the temporary directory if temp folder option is enabled
-    if use_temp_folder:
+    if use_temp_folder == "y":
         temp_dir = os.path.expanduser("~/yt-dlp-sc/temp/")  # Temporary folder path
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)  # Create temp folder if it doesn't exist
@@ -271,7 +301,7 @@ def download_queue():
             save_queue()
 
     # Move files from temp folder to final directory if temp folder was used
-    if use_temp_folder:
+    if use_temp_folder == "y":
         move_files_to_final_directory(temp_dir)
 
 def move_files_to_final_directory(temp_dir):
