@@ -3,10 +3,12 @@ import sys
 import time
 import subprocess
 import configparser
+import shutil
 
 # Define the path to the configuration file and the queue file
 config_file_path = os.path.expanduser('~/.config/yt-dlp-sc/options.conf')
 queue_file_path = os.path.expanduser('~/.config/yt-dlp-sc/queue.txt')
+use_temp_folder = "n"
 
 def ensure_header():
     """Ensure that the configuration file starts with a section header [yt-dlp]."""
@@ -28,6 +30,52 @@ if not os.path.exists(config_file_path):
     print(f"Configuration file not found: {config_file_path}")
     print(f"Using default configuration")
     ensure_header()
+
+def set_temp_folder_option(temp_option):
+    options_file = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
+    
+    if temp_option.lower() == "y":
+        use_temp_folder = "y"
+    elif temp_option.lower() == "n":
+        use_temp_folder = "n"
+    else:
+        print("Invalid option for temp. Use 'y' or 'n'.")
+        return
+    
+    # Load existing options, modify or add the temp folder option
+    if os.path.exists(options_file):
+        with open(options_file, "r") as f:
+            lines = f.readlines()
+    else:
+        lines = []
+    
+    # Find and update the 'use_temp_folder' setting
+    updated = False
+    for i, line in enumerate(lines):
+        if line.startswith("use_temp_folder"):
+            lines[i] = f"use_temp_folder={use_temp_folder}\n"
+            updated = True
+            ensure_header()
+            break
+    
+    # If 'use_temp_folder' setting wasn't found, add it
+    if not updated:
+        lines.append(f"use_temp_folder={use_temp_folder}\n")
+        ensure_header()
+    
+    # Save back to the options file
+    with open(options_file, "w") as f:
+        f.writelines(lines)
+        ensure_header()
+    
+    print(f"Temporary folder option set to {use_temp_folder}")
+
+# Command handler for temp
+if len(sys.argv) > 1 and sys.argv[1] == "temp":
+    if len(sys.argv) == 3:
+        set_temp_folder_option(sys.argv[2])
+    else:
+        print("Usage: python yt_queue.py temp <y|n>")
 
 # Initialize ConfigParser and read the config
 config = configparser.ConfigParser()
@@ -56,6 +104,19 @@ def load_config():
                     retry_delay = int(line.strip().split('=', 1)[1])
     else:
         print("Config file not found, using default values.")
+
+def load_options():
+    options_file = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
+    options = {}
+
+    if os.path.exists(options_file):
+        with open(options_file, "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                if "=" in line:
+                    key, value = line.strip().split("=", 1)
+                    options[key] = value
+    return options
 
 def save_config():
     with open(config_file_path, 'w') as f:
@@ -93,6 +154,7 @@ def show_help():
     - options "opts"  : Set yt-dlp options.
     - start           : Start the download session.
     - clear           : Clears the download queue manually.
+    - temp <y|n>      : Enables or disables the temporary download folder option.
     - help            : Show this help message.
     """
     print(help_text)
@@ -157,36 +219,91 @@ def set_yt_dlp_options(options):
 
 def download_queue():
     global queue
+    options = load_options()  # Load the latest configuration options
+    use_temp_folder = options.get("use_temp_folder", "n").lower() == "y"  # Check if temp folder is enabled
+
+    # Define the temporary directory if temp folder option is enabled
+    if use_temp_folder:
+        temp_dir = os.path.expanduser("~/yt-dlp-sc/temp/")  # Temporary folder path
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)  # Create temp folder if it doesn't exist
+        download_dir = temp_dir  # Set download directory to the temp folder
+        print(f"Downloading to temporary folder: {temp_dir}")
+    else:
+        download_dir = download_directory  # Use final directory if temp folder is not enabled
+        print(f"Downloading directly to final directory: {download_dir}")
+
+    # The archive file to track completed downloads
+    download_archive = os.path.expanduser("~/yt-dlp-sc/downloaded_videos.txt")
+
     while queue:
-        link = queue[0]  # Get the first link from the queue (don't remove it yet)
-        print(f"Starting download to {download_directory}")
+        link = queue[0]  # Get the first link from the queue
+        print(f"Starting download to: {download_dir}")
         print(f"yt-dlp options set to: {yt_dlp_options}")
-        command = ["yt-dlp"] + yt_dlp_options.split() + [link]  # Build command with options
+
+        # Build the yt-dlp command with the archive and options
+        command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
         retry_count = 0  # Reset retry count for each link
-        
-        while retry_count < 3:  # Set a max retry limit
+
+        while retry_count < 3:  # Retry up to 3 times
             try:
-                result = subprocess.run(command, check=True, cwd=download_directory, stderr=subprocess.PIPE)
+                result = subprocess.run(command, check=True, cwd=download_dir, stderr=subprocess.PIPE)
                 print(f"Finished downloading: {link}")
-                queue.pop(0)  # Remove the successfully downloaded link from the queue
+
+                queue.pop(0)  # Remove successfully downloaded link from the queue
                 save_queue()  # Save updated queue
-                break  # Exit retry loop if download succeeds
+                break  # Exit retry loop on success
             except subprocess.CalledProcessError as e:
                 stderr_output = e.stderr.decode().strip()
                 
                 if "Sign in to confirm you’re not a bot" in stderr_output:
                     print(f"Error: '{stderr_output}'. Pausing for {retry_delay} minutes.")
-                    time.sleep(retry_delay * 60)  # Pause for the set retry delay
-                    retry_count += 1  # Increment the retry count but keep the same link in the queue
+                    time.sleep(retry_delay * 60)  # Pause before retry
+                    retry_count += 1
                 else:
                     print(f"Error downloading {link}: {stderr_output}. Retrying...")
-                    time.sleep(retry_delay * 60)  # Pause before retrying other errors as well
+                    time.sleep(retry_delay * 60)
                     retry_count += 1
 
         if retry_count == 3:
-            print(f"Failed to download {link} after 3 attempts. Moving to next link.")
-            queue.pop(0)  # Remove the link after max retries
-            save_queue()  # Save updated queue
+            print(f"Failed to download {link} after 3 attempts. Skipping...")
+            queue.pop(0)  # Remove after max retries
+            save_queue()
+
+    # Move files from temp folder to final directory if temp folder was used
+    if use_temp_folder:
+        move_files_to_final_directory(temp_dir)
+
+def move_files_to_final_directory(temp_dir):
+    downloaded_files = os.listdir(temp_dir)  # List files in the temp folder
+    if not downloaded_files:
+        print(f"No files found in {temp_dir} after download.")
+        return
+
+    # Move each file to the final download directory
+    for filename in downloaded_files:
+        temp_file_path = os.path.join(temp_dir, filename)
+        final_file_path = os.path.join(download_directory, filename)
+        print(f"Moving {temp_file_path} to {final_file_path}")
+        shutil.move(temp_file_path, final_file_path)
+
+    print("All downloaded files have been moved to the final directory.")
+
+def move_files_to_final_directory(temp_dir):
+    # List all downloaded files in the temporary directory
+    downloaded_files = os.listdir(temp_dir)
+    if not downloaded_files:
+        print(f"Error: No files found in {temp_dir} after download.")
+        return
+
+    # Move each downloaded file to the actual download directory
+    for filename in downloaded_files:
+        temp_file_path = os.path.join(temp_dir, filename)
+        final_file_path = os.path.join(download_directory, filename)
+        print(f"Moving {temp_file_path} to {final_file_path}")
+        shutil.move(temp_file_path, final_file_path)
+
+    print("All downloaded files have been moved to the final directory.")
 
 def main():
     load_config()  # Load configuration
@@ -236,6 +353,12 @@ def main():
             print("The queue is empty. Please add links before starting the download.")
             return
         download_queue()
+    elif command == 'temp':
+        if len(sys.argv) > 1 and sys.argv[1] == "temp":
+            if len(sys.argv) == 3:
+                set_temp_folder_option(sys.argv[2])
+            else:
+                print("Usage: python yt_queue.py temp <y|n>")
     elif command == 'help':
         show_help()
     else:
