@@ -56,4 +56,4 @@ FUTURE PLANS:
 
 >[!NOTE]
 >This program uses the [yt-dlp](https://github.com/yt-dlp/yt-dlp) github repository, and is vulnerable to any and all issues present within. Any issues with yt-dlp will **MOST LIKLEY** carry over to this program, thus performance
->cannot be guarenteed. For best results, use known-working options. Any issues outside of this are not my fault/problem, and will **NOT** be addressed.
+>cannot be guarenteed. For best results, use known-working options. Any issues which result from not following this recommendation are not my fault/problem, and will **NOT** be addressed.
