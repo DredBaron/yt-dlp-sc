@@ -47,7 +47,7 @@ OPTIONS:
   
   ```clear``` - Clears the download queue manually.
 
-  ```temp``` - Enables or disables the temporary download folder. This folder is located at ```~/yt-ddlp-sc/``` and houses the video, audio, and parts until the full video is downloaded
+  ```temp``` - Enables or disables the temporary download folder. The default is ```n``` This folder is located at ```~/yt-ddlp-sc/``` and houses the video, audio, and parts until the full video is downloaded
   and combined. The final video is moved to the proper folder, and a record of the download is kept using  yt-dlp's built-in ```--download-archive``` function. This way, videos are not
   downloaded in duplicate. The file is moved before the next download starts.
   
