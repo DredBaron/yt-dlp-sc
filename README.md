@@ -2,12 +2,12 @@
 
 INSTALLATION:
   
-  I manually put this script in /usr/bin/yt-dlp-sc/ and added the alias to my terminal "alias yt='python /usr/bin/yt-dlp-sc/yt_queue.py'"
+  I manually put this script in /usr/bin/yt-dlp-sc/ and added the alias to my terminal as "alias yt='python /usr/bin/yt-dlp-sc/yt_queue.py'"
 
 CONFIGURATION:
   
-  There are two files which are created for use with the program. The files are created in ~/.config/yt-dlp-sc and are "options.conf" and "queue.txt". The options.conf file are where custom
-  configurations are stored, and queue.txt is where the download queue is stored.
+  There are two files which are created for use with the program. The files are created in ~/.config/yt-dlp-sc and are "options.conf" and "queue.txt". The options.conf file is where custom
+  configuration is stored, and queue.txt is where the download queue is stored.
 
 USAGE:
   
