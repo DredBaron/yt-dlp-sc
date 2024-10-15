@@ -12,7 +12,7 @@ CONFIGURATION:
 USAGE:
   
   The program has a few different options, running it with no options or with help shows the help page.
-
+```
     Commands:
     - add <link>      : Add a link to the download queue.
     - show            : Show the current download queue and settings.
@@ -23,7 +23,7 @@ USAGE:
     - start           : Start the download session.
     - clear           : Clears the download queue manually.
     - help            : Show this help message.
-
+```
 OPTIONS:
 
   add - Adds the following link to the queue file.
