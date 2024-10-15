@@ -25,6 +25,7 @@ USAGE:
     - options "opts"  : Set yt-dlp options.
     - start           : Start the download session.
     - clear           : Clears the download queue manually.
+    - temp <y|n>      : Enables or disables the temporary download folder option.
     - help            : Show this help message.
 ```
 OPTIONS:
@@ -45,6 +46,10 @@ OPTIONS:
   ```start``` - Starts the download with whatever is in the download queue
   
   ```clear``` - Clears the download queue manually.
+
+  ```temp``` - Enables or disables the temporary download folder. This folder is located at ```~/yt-ddlp-sc/``` and houses the video, audio, and parts until the full video is downloaded
+  and combined. The final video is moved to the proper folder, and a record of the download is kept using  yt-dlp's built-in ```--download-archive``` function. This way, videos are not
+  downloaded in duplicate. The file is moved before the next download starts.
   
   ```help``` - Shows the help menu.
 
