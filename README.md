@@ -40,7 +40,7 @@ OPTIONS:
   ```setdelay``` - If the program detects the "Please log in to prove you are not a bot" error, the delay can be set for how long the program will wait in minutes to auto-resume.
   
   ```options``` - Lets you set custom yt-dlp options. The default is 
-  ```-f bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a] -N 2```
+  ```-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2```
   
   ```start``` - Starts the download with whatever is in the download queue
   
