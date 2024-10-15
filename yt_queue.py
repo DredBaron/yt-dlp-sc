@@ -8,42 +8,40 @@ import configparser
 config_file_path = os.path.expanduser('~/.config/yt-dlp-sc/options.conf')
 queue_file_path = os.path.expanduser('~/.config/yt-dlp-sc/queue.txt')
 
+def ensure_header():
+    """Ensure that the configuration file starts with a section header [yt-dlp]."""
+    if not os.path.exists(config_file_path):
+        with open(config_file_path, 'w') as f:
+            f.write("[yt-dlp]\n")
+            f.write("download_directory=/home/$USER/Downloads\n")
+            f.write("options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2\n")
+    else:
+        with open(config_file_path, 'r+') as f:
+            lines = f.readlines()
+            if not lines or not lines[0].startswith("["):
+                # Insert header if the first line doesn't start with [
+                f.seek(0, 0)
+                f.write("[yt-dlp]\n" + "".join(lines))
+
 # Check if the configuration file exists
 if not os.path.exists(config_file_path):
     print(f"Configuration file not found: {config_file_path}")
-    # Create the file with default values and section headers
-    with open(config_file_path, 'w') as f:
-        f.write("[yt-dlp]\n")
-        f.write("download_directory=/home/$USER/Downloads\n")
-        f.write("options=-f bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a] -N 8\n")
+    print(f"Using default configuration")
+    ensure_header()
 
 # Initialize ConfigParser and read the config
 config = configparser.ConfigParser()
 config.read(config_file_path)
 
 # Get options and download directory
-download_directory = config.get('yt-dlp', 'download_directory', fallback='/home/$USER/Downloads/')
-options = config.get('yt-dlp', 'options', fallback='-f bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a] -N 2')
+download_directory = config.get('yt-dlp', 'download_directory')
+options = config.get('yt-dlp', 'yt_dlp_options')
 
 # Initialize global variables
 download_directory = os.getcwd()  # Default to current working directory
 yt_dlp_options = ""  # Default yt-dlp options
 retry_delay = 15  # Default retry delay in minutes
 queue = []  # In-memory download queue
-
-def ensure_header():
-    """Ensure that the configuration file starts with a header."""
-    with open(config_file_path, 'r') as f:
-        lines = f.readlines()
-
-    # Check if there are any lines in the file
-    if len(lines) == 0 or not lines[0].startswith('['):
-        # If the file is empty or the first line doesn't start with '[', add the header
-        lines.insert(0, "[yt-dlp]\n")
-
-        # Write back to the config file
-        with open(config_file_path, 'w') as f:
-            f.writelines(lines)
 
 def load_config():
     global download_directory, yt_dlp_options, retry_delay
@@ -132,9 +130,9 @@ def set_download_directory(directory):
         download_directory = directory
         save_config()  # Save the new directory to the config file
         print(f"Download directory set to: {download_directory}")
+        ensure_header()
     else:
         print("Invalid directory. Please provide a valid path.")
-    ensure_header()  # Ensure the header is present
 
 def set_retry_delay(delay_str):
     global retry_delay
@@ -148,33 +146,40 @@ def set_retry_delay(delay_str):
         print(f"Retry delay set to {retry_delay} minutes.")
     except ValueError:
         print("Invalid delay value. Please provide a number.")
-    ensure_header()  # Ensure the header is present
+    ensure_header()
 
 def set_yt_dlp_options(options):
     global yt_dlp_options
     yt_dlp_options = options  # Store the full string as is
     save_config()  # Save the new options to the config file
     print(f"yt-dlp options set to: {yt_dlp_options}")
-    ensure_header()  # Ensure the header is present
+    ensure_header()
 
 def download_queue():
     global queue
     while queue:
         link = queue.pop(0)  # Get the first link from the queue
-        print(f"Starting download: {link} to {download_directory} with yt-dlp options set to: {yt_dlp_options}")
+        print(f"Starting download to {download_directory}")
+        print(f"yt-dlp options set to: {yt_dlp_options}")
         command = ["yt-dlp"] + yt_dlp_options.split() + [link]  # Build command with options
-        try:
-            subprocess.run(command, check=True, cwd=download_directory)
-        except subprocess.CalledProcessError as e:
-            print(f"Error downloading {link}: {e}. Retrying in {retry_delay} minutes.")
-            queue.append(link)  # Re-add to queue for retry
-            save_queue()  # Save updated queue
-            time.sleep(retry_delay * 60)  # Delay before retrying
-        print(f"Finished downloading: {link}")
+        retry_count = 0  # Reset retry count for each link
+        while retry_count < 3:  # Set a max retry limit
+            try:
+                result = subprocess.run(command, check=True, cwd=download_directory, stderr=subprocess.PIPE)
+                print(f"Finished downloading: {link}")
+                break  # Exit retry loop if download succeeds
+            except subprocess.CalledProcessError as e:
+                print(f"Error downloading {link}: {e.stderr.decode().strip()}. Retrying in {retry_delay} minutes.")
+                queue.append(link)  # Re-add to queue for retry
+                save_queue()  # Save updated queue
+                time.sleep(retry_delay * 60)  # Delay before retrying
+                retry_count += 1  # Increment the retry count
+        if retry_count == 3:
+            print(f"Failed to download {link} after 3 attempts.")
 
 def main():
-    load_config()  # Load configuration at the start
-    load_queue()  # Load the queue at the start
+    load_config()  # Load configuration
+    load_queue()  # Load the queue
 
     if len(sys.argv) < 2:
         show_help()
@@ -214,13 +219,12 @@ def main():
         if len(sys.argv) < 3:
             print("Please provide yt-dlp options to set.")
             return
-        set_yt_dlp_options(" ".join(sys.argv[2:]))  # Pass the full options string
+        set_yt_dlp_options(" ".join(sys.argv[2:]))
     elif command == 'start':
         if not queue:
             print("The queue is empty. Please add links before starting the download.")
             return
-        print(f"Starting download session...")
-        download_queue()  # Call the download function directly
+        download_queue()
     elif command == 'help':
         show_help()
     else:
