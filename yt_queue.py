@@ -90,7 +90,7 @@ def show_help():
     - remove <index>  : Remove a link from the queue by index.
     - setdir <path>   : Set the download directory.
     - setdelay <min>  : Set the retry delay in minutes.
-    - options <opts>  : Set yt-dlp options.
+    - options "opts"  : Set yt-dlp options.
     - start           : Start the download session.
     - clear           : Clears the download queue manually.
     - help            : Show this help message.
@@ -158,24 +158,35 @@ def set_yt_dlp_options(options):
 def download_queue():
     global queue
     while queue:
-        link = queue.pop(0)  # Get the first link from the queue
+        link = queue[0]  # Get the first link from the queue (don't remove it yet)
         print(f"Starting download to {download_directory}")
         print(f"yt-dlp options set to: {yt_dlp_options}")
         command = ["yt-dlp"] + yt_dlp_options.split() + [link]  # Build command with options
         retry_count = 0  # Reset retry count for each link
+        
         while retry_count < 3:  # Set a max retry limit
             try:
                 result = subprocess.run(command, check=True, cwd=download_directory, stderr=subprocess.PIPE)
                 print(f"Finished downloading: {link}")
+                queue.pop(0)  # Remove the successfully downloaded link from the queue
+                save_queue()  # Save updated queue
                 break  # Exit retry loop if download succeeds
             except subprocess.CalledProcessError as e:
-                print(f"Error downloading {link}: {e.stderr.decode().strip()}. Retrying in {retry_delay} minutes.")
-                queue.append(link)  # Re-add to queue for retry
-                save_queue()  # Save updated queue
-                time.sleep(retry_delay * 60)  # Delay before retrying
-                retry_count += 1  # Increment the retry count
+                stderr_output = e.stderr.decode().strip()
+                
+                if "Sign in to confirm you’re not a bot" in stderr_output:
+                    print(f"Error: '{stderr_output}'. Pausing for {retry_delay} minutes.")
+                    time.sleep(retry_delay * 60)  # Pause for the set retry delay
+                    retry_count += 1  # Increment the retry count but keep the same link in the queue
+                else:
+                    print(f"Error downloading {link}: {stderr_output}. Retrying...")
+                    time.sleep(retry_delay * 60)  # Pause before retrying other errors as well
+                    retry_count += 1
+
         if retry_count == 3:
-            print(f"Failed to download {link} after 3 attempts.")
+            print(f"Failed to download {link} after 3 attempts. Moving to next link.")
+            queue.pop(0)  # Remove the link after max retries
+            save_queue()  # Save updated queue
 
 def main():
     load_config()  # Load configuration
