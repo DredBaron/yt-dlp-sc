@@ -47,9 +47,10 @@ OPTIONS:
   
   ```clear``` - Clears the download queue manually.
 
-  ```temp``` - Enables or disables the temporary download folder. The default is ```n``` This folder is located at ```~/yt-ddlp-sc/``` and houses the video, audio, and parts until the full video is downloaded
-  and combined. The final video is moved to the proper folder, and a record of the download is kept using  yt-dlp's built-in ```--download-archive``` function. This way, videos are not
-  downloaded in duplicate. The file is moved before the next download starts.
+  ```temp``` - Enables or disables the temporary download folder. The default is ```n``` This folder is located at ```~/yt-ddlp-sc/``` and houses the video, audio, and parts until the full
+  video is downloaded and combined. The final video is moved to the proper folder, and a record of the download is kept using  yt-dlp's built-in ```--download-archive``` function. This way,
+  videos are not downloaded in duplicate. The file is moved before the next download starts. The intent behind this is to use the (probably) faster read/write speed of the home drive to do
+  all the I/O work, then moving the file to whatever drive is specified for storage. In my experience, this is best set to ```y``` when the final directory is either a NAS or a HDD. Or both.
   
   ```help``` - Shows the help menu.
 
