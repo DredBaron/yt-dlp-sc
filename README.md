@@ -21,7 +21,7 @@ USAGE:
     - show            : Show the current download queue and settings.
     - remove <index>  : Remove a link from the queue by index.
     - setdir <path>   : Set the download directory.
-    - setdelay <min>  : Set the retry delay in minutes. !!NOT IMPLEMENTED, NO EFFECT!!
+    - setdelay <min>  : Set the retry delay in minutes. **!!Implemented, but untested!!**
     - options "opts"  : Set yt-dlp options.
     - start           : Start the download session.
     - clear           : Clears the download queue manually.
@@ -49,8 +49,6 @@ OPTIONS:
   ```help``` - Shows the help menu.
 
 FUTURE PLANS:
-  
-  Work on 'setdelay', as I don't actually have a function implemented yet. The default is currently 15 minutes.
 
   Add an auto-clear of the queue after all files have been downloaded, so users don't have to do it manually.
 
