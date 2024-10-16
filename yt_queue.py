@@ -62,13 +62,15 @@ try:
 except configparser.NoOptionError:
     print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Temporary Folder option is not set. Please run {bcolors.OKCYAN}'temp <y|n>'{bcolors.ENDC}")
 except configparser.NoSectionError:
-    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} 'yt-dlp' section not found in the config file. Re-genrating default config...")
+    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file not found. Generating default file...")
     ensure_header()
+    config.read(config_file_path)
+    use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
 except configparser.MissingSectionHeaderError:
-    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Re-genrating default config...")
+    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Fenrating default file...")
     ensure_header()
 except FileNotFoundError:
-    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Re-genrating default config...")
+    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Fenrating default file...")
     ensure_header()
 
 # Get other user options
@@ -166,7 +168,7 @@ def load_queue():
         with open(queue_file_path, 'r') as f:
             queue = [line.strip() for line in f if line.strip()]  # Load non-empty lines
     else:
-        print("Queue file not found, starting with an empty queue.")
+        print("Queue file not found, generating an empty queue.")
 
 def save_queue():
     with open(queue_file_path, 'w') as f:
