@@ -29,7 +29,7 @@ def ensure_header():
     required_lines = [
         "[yt-dlp]\n",
         "download_directory=/home/$USER/Downloads\n",
-        "options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2\n",
+        "yt_dlp_options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2\n",
         "use_temp_folder=n\n",
         "retry_delay=15\n"
     ]
