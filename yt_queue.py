@@ -112,40 +112,10 @@ def load_queue():
         with open(queue_file_path, 'w') as f:
             pass
 
-def set_temp_folder_option(temp_option):
-    options_file = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
+def set_temp_folder_option(temp_folder_option):
     global use_temp_folder
-    if temp_option.lower() == "y":
-        use_temp_folder = "y"
-    elif temp_option.lower() == "n":
-        use_temp_folder = "n"
-    else:
-        print("Invalid option for temp. Use 'y' or 'n'.")
-        return
-    
-    # Load existing options, modify or add the temp folder option
-    if os.path.exists(options_file):
-        with open(options_file, "r") as f:
-            lines = f.readlines()
-    else:
-        lines = []
-    
-    # Find and update the 'use_temp_folder' setting
-    updated = False
-    for i, line in enumerate(lines):
-        if line.startswith("use_temp_folder"):
-            lines[i] = f"use_temp_folder={use_temp_folder}\n"
-            updated = True
-            break
-    
-    # If 'use_temp_folder' setting wasn't found, add it
-    if not updated:
-        lines.append(f"use_temp_folder={use_temp_folder}\n")
-    
-    # Save back to the options file
-    with open(options_file, "w") as f:
-        f.writelines(lines)
-    
+    use_temp_folder = temp_folder_option
+    save_config()
     print(f"Temporary folder option set to {use_temp_folder}")
 
 def set_download_directory(directory):
