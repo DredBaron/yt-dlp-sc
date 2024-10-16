@@ -15,79 +15,102 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-# Define the path to the configuration file and the queue file
+# Define the path to the configuration and queue files
 config_file_path = os.path.expanduser('~/.config/yt-dlp-sc/options.conf')
 queue_file_path = os.path.expanduser('~/.config/yt-dlp-sc/queue.txt')
-
-# Initialize ConfigParser and read the config
 config = configparser.ConfigParser()
-config.read(config_file_path)
 
-def ensure_header():
-    """Ensure that the configuration file has the required section header and options."""
-    # Define the required lines for the configuration
-    required_lines = [
+# Initialize global variables
+download_directory = os.getcwd()
+yt_dlp_options = ""
+retry_delay = 15
+queue = []
+
+def write_default():
+    print(f"{bcolors.ERROR}Configuration file not found:{bcolors.ENDC} {config_file_path}")
+    print(f"Creating configuration file with default settings.")
+    default_options = [
         "[yt-dlp]\n",
         "download_directory=/home/$USER/Downloads\n",
         "yt_dlp_options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2\n",
         "use_temp_folder=n\n",
         "retry_delay=15\n"
     ]
+    with open(config_file_path, 'w') as f:
+        f.writelines(default_options)
 
-    # Check if the config file exists
-    if not os.path.exists(config_file_path):
-        # Create the config file with the required lines
-        with open(config_file_path, 'w') as f:
-            f.writelines(required_lines)
+def is_file_empty_or_whitespace(file_path):
+    if not os.path.exists(file_path):
+        return True
+
+    with open(file_path, 'r') as f:
+        content = f.read()
+        return not content.strip()
+
+def check_header(file_path):
+    try:
+        with open(file_path, 'r') as f:
+            content = f.readlines()
+    except FileNotFoundError:
+        content = []
+    if not any(line.strip() == "[yt-dlp]" for line in content):
+        return False
     else:
-        # Read the existing lines
-        with open(config_file_path, 'r+') as f:
+        return True
+    
+def prepend_line_to_file(file_path, line):
+    # Read the existing contents of the file
+    with open(file_path, 'r') as f:
+        content = f.readlines()
+    
+    # Prepend the new line to the content
+    content.insert(0, line + '\n')  # Add a newline at the end of the line
+
+    # Write the modified content back to the file
+    with open(file_path, 'w') as f:
+        f.writelines(content)
+
+# Check if the configuration file exists and isn't empty, and loads the user settings if it does.
+if os.path.exists(config_file_path) and not os.stat(config_file_path).st_size == 0:
+    if not check_header(config_file_path):
+        prepend_line_to_file(config_file_path, "[yt-dlp]")
+    else:
+        config.read(config_file_path)
+        use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
+        download_directory = config.get('yt-dlp', 'download_directory')
+        yt_dlp_options = config.get('yt-dlp', 'yt_dlp_options')
+        retry_delay = config.get('yt-dlp', 'retry_delay')
+
+# Check if the configuration file exists, but is only blank/whitespace.
+elif is_file_empty_or_whitespace(config_file_path):
+    write_default()
+
+def load_options():
+    options_file = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
+    options = {}
+
+    if os.path.exists(options_file):
+        with open(options_file, "r") as f:
             lines = f.readlines()
-            f.seek(0)  # Move the cursor to the beginning of the file
+            for line in lines:
+                if "=" in line:
+                    key, value = line.strip().split("=", 1)
+                    options[key] = value
+        return options
 
-            # Ensure the header section is present
-            if not any(line.startswith("[yt-dlp]") for line in lines):
-                f.write("[yt-dlp]\n")
+    else:
+        print(f"Error: Problem loading OPTIONS.CONF")
+        return
 
-            # Check for each required line and add if missing
-            for required_line in required_lines[1:]:  # Skip the header
-                if required_line not in lines:
-                    f.write(required_line)
-
-            f.writelines(lines)  # Write back the existing lines
-
-try:
-    config.read(config_file_path)
-    use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
-except configparser.NoOptionError:
-    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Temporary Folder option is not set. Please run {bcolors.OKCYAN}'temp <y|n>'{bcolors.ENDC}")
-except configparser.NoSectionError:
-    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file not found. Generating default file...")
-    ensure_header()
-    config.read(config_file_path)
-    use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
-except configparser.MissingSectionHeaderError:
-    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Fenrating default file...")
-    ensure_header()
-except FileNotFoundError:
-    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Fenrating default file...")
-    ensure_header()
-
-# Get other user options
-download_directory = config.get('yt-dlp', 'download_directory')
-yt_dlp_options = config.get('yt-dlp', 'yt_dlp_options')
-
-# Initialize global variables
-download_directory = os.getcwd()  # Default to current working directory
-yt_dlp_options = ""  # Default yt-dlp options
-retry_delay = 15  # Default retry delay in minutes
-queue = []  # In-memory download queue
-
-# Check if the configuration file exists
-if not os.path.exists(config_file_path):
-    print(f"Configuration file not found: {config_file_path}")
-    print(f"Using default configuration")
-    ensure_header()
+def load_queue():
+    global queue
+    if os.path.exists(queue_file_path):
+        with open(queue_file_path, 'r') as f:
+            queue = [line.strip() for line in f if line.strip()]  # Load non-empty lines
+    else:
+        print(f"{bcolors.ERROR}Queue file not found,{bcolors.ENDC} generating empty queue.")
+        with open(queue_file_path, 'w') as f:
+            pass
 
 def set_temp_folder_option(temp_option):
     options_file = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
@@ -113,67 +136,58 @@ def set_temp_folder_option(temp_option):
         if line.startswith("use_temp_folder"):
             lines[i] = f"use_temp_folder={use_temp_folder}\n"
             updated = True
-            ensure_header()
             break
     
     # If 'use_temp_folder' setting wasn't found, add it
     if not updated:
         lines.append(f"use_temp_folder={use_temp_folder}\n")
-        ensure_header()
     
     # Save back to the options file
     with open(options_file, "w") as f:
         f.writelines(lines)
-        ensure_header()
     
     print(f"Temporary folder option set to {use_temp_folder}")
 
-def load_config():
-    global download_directory, yt_dlp_options, retry_delay
-    if os.path.exists(config_file_path):
-        with open(config_file_path, 'r') as f:
-            for line in f:
-                if line.startswith('download_directory='):
-                    download_directory = line.strip().split('=', 1)[1]
-                elif line.startswith('yt_dlp_options='):
-                    yt_dlp_options = line.strip().split('=', 1)[1]
-                elif line.startswith('retry_delay='):
-                    retry_delay = int(line.strip().split('=', 1)[1])
+def set_download_directory(directory):
+    global download_directory
+    if os.path.isdir(directory):
+        download_directory = directory
+        save_config()
+        print(f"Download directory set to: {download_directory}")
     else:
-        print("Config file not found, using default values.")
+        print("Invalid directory. Please provide a valid path.")
 
-def load_options():
-    options_file = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
-    options = {}
-
-    if os.path.exists(options_file):
-        with open(options_file, "r") as f:
-            lines = f.readlines()
-            for line in lines:
-                if "=" in line:
-                    key, value = line.strip().split("=", 1)
-                    options[key] = value
-    return options
+def set_yt_dlp_options(options):
+    global yt_dlp_options
+    yt_dlp_options = options
+    save_config()
+    print(f"yt-dlp options set to: {yt_dlp_options}")
 
 def save_config():
     with open(config_file_path, 'w') as f:
+        f.write(f"[yt-dlp]\n")
         f.write(f"download_directory={download_directory}\n")
         f.write(f"yt_dlp_options={yt_dlp_options}\n")
+        f.write(f"use_temp_folder={use_temp_folder}\n")
         f.write(f"retry_delay={retry_delay}\n")
-        ensure_header()  # Ensure the header is present
 
-def load_queue():
-    global queue
-    if os.path.exists(queue_file_path):
-        with open(queue_file_path, 'r') as f:
-            queue = [line.strip() for line in f if line.strip()]  # Load non-empty lines
-    else:
-        print("Queue file not found, generating an empty queue.")
+def set_retry_delay(delay_str):
+    global retry_delay
+    try:
+        delay = int(delay_str)
+        if delay < 1:
+            print("Delay cannot be less than 1 minute.")
+            return
+        retry_delay = delay
+        save_config()
+        print(f"Retry delay set to {retry_delay} minutes.")
+    except ValueError:
+        print("Invalid delay value. Please provide a number.")
 
 def save_queue():
     with open(queue_file_path, 'w') as f:
         for link in queue:
-            f.write(link + "\n")  # Write each link on a new line
+            f.write(link + "\n")
 
 # Clear the download queue
 def clear_queue():
@@ -247,40 +261,8 @@ def remove_from_queue(index):
     else:
         print("Index out of range.")
 
-def set_download_directory(directory):
-    global download_directory
-    if os.path.isdir(directory):
-        download_directory = directory
-        save_config()  # Save the new directory to the config file
-        print(f"Download directory set to: {download_directory}")
-        ensure_header()
-    else:
-        print("Invalid directory. Please provide a valid path.")
-
-def set_retry_delay(delay_str):
-    global retry_delay
-    try:
-        delay = int(delay_str)
-        if delay < 0:
-            print("Delay cannot be negative.")
-            return
-        retry_delay = delay
-        save_config()  # Save the new delay to the config file
-        print(f"Retry delay set to {retry_delay} minutes.")
-    except ValueError:
-        print("Invalid delay value. Please provide a number.")
-    ensure_header()
-
-def set_yt_dlp_options(options):
-    global yt_dlp_options
-    yt_dlp_options = options  # Store the full string as is
-    save_config()  # Save the new options to the config file
-    print(f"yt-dlp options set to: {yt_dlp_options}")
-    ensure_header()
-
 def download_queue():
     global queue
-    options = load_options()  # Load the latest configuration options
 
     # Define the temporary directory if temp folder option is enabled
     if use_temp_folder == "y":
@@ -369,10 +351,15 @@ def show_queue():
     print(f"{bcolors.BOLD}{bcolors.OKGREEN}Current settings:\n{bcolors.ENDC}")
     print(f"{bcolors.UNDERLINE}Download directory is:{bcolors.ENDC}")
     print(f"{bcolors.OKBLUE}{download_directory}\n{bcolors.ENDC}")
-    print(f"{bcolors.UNDERLINE}Delay is set to:{bcolors.ENDC}")
+    print(f"{bcolors.UNDERLINE}Retry Delay is:{bcolors.ENDC}")
     print(f"{bcolors.OKBLUE}{retry_delay} minutes\n{bcolors.ENDC}")
-    print(f"{bcolors.UNDERLINE}Temp download folder is set to:{bcolors.ENDC}")
-    print(f"{bcolors.OKBLUE}{use_temp_folder}\n{bcolors.ENDC}")
+    print(f"{bcolors.UNDERLINE}Temp download folder is:{bcolors.ENDC}")
+    if use_temp_folder == "y":
+        print(f"{bcolors.OKBLUE}enabled\n{bcolors.ENDC}")
+    elif use_temp_folder == "n":
+        print(f"{bcolors.ERROR}disabled\n{bcolors.ENDC}")
+    else:
+        return
     print(f"{bcolors.UNDERLINE}yt-dlp options are:{bcolors.ENDC}")
     print(f"{bcolors.OKBLUE}{yt_dlp_options}\n{bcolors.ENDC}")
     print(f"{bcolors.OKBLUE}{bcolors.BOLD}{bcolors.OKGREEN}Current download queue:{bcolors.ENDC}")
@@ -380,8 +367,7 @@ def show_queue():
         print(f"{bcolors.OKCYAN}{index} - {link}{bcolors.ENDC}")
 
 def main():
-    load_config()  # Load configuration
-    load_queue()  # Load the queue
+    load_queue()
 
     if len(sys.argv) < 2:
         show_help()
