@@ -5,6 +5,16 @@ import subprocess
 import configparser
 import shutil
 
+class bcolors:
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    ERROR = '\033[93m'
+    CRITICAL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 # Define the path to the configuration file and the queue file
 config_file_path = os.path.expanduser('~/.config/yt-dlp-sc/options.conf')
 queue_file_path = os.path.expanduser('~/.config/yt-dlp-sc/queue.txt')
@@ -13,40 +23,63 @@ queue_file_path = os.path.expanduser('~/.config/yt-dlp-sc/queue.txt')
 config = configparser.ConfigParser()
 config.read(config_file_path)
 
-# Get user options
+def ensure_header():
+    """Ensure that the configuration file has the required section header and options."""
+    # Define the required lines for the configuration
+    required_lines = [
+        "[yt-dlp]\n",
+        "download_directory=/home/$USER/Downloads\n",
+        "options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2\n",
+        "use_temp_folder=n\n",
+        "retry_delay=15\n"
+    ]
+
+    # Check if the config file exists
+    if not os.path.exists(config_file_path):
+        # Create the config file with the required lines
+        with open(config_file_path, 'w') as f:
+            f.writelines(required_lines)
+    else:
+        # Read the existing lines
+        with open(config_file_path, 'r+') as f:
+            lines = f.readlines()
+            f.seek(0)  # Move the cursor to the beginning of the file
+
+            # Ensure the header section is present
+            if not any(line.startswith("[yt-dlp]") for line in lines):
+                f.write("[yt-dlp]\n")
+
+            # Check for each required line and add if missing
+            for required_line in required_lines[1:]:  # Skip the header
+                if required_line not in lines:
+                    f.write(required_line)
+
+            f.writelines(lines)  # Write back the existing lines
+
+try:
+    config.read(config_file_path)
+    use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
+except configparser.NoOptionError:
+    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Temporary Folder option is not set. Please run {bcolors.OKCYAN}'temp <y|n>'{bcolors.ENDC}")
+except configparser.NoSectionError:
+    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} 'yt-dlp' section not found in the config file. Re-genrating default config...")
+    ensure_header()
+except configparser.MissingSectionHeaderError:
+    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Re-genrating default config...")
+    ensure_header()
+except FileNotFoundError:
+    print(f"{bcolors.ERROR}Configuration Error:{bcolors.ENDC} Config file '{config_file_path}' not found. Re-genrating default config...")
+    ensure_header()
+
+# Get other user options
 download_directory = config.get('yt-dlp', 'download_directory')
-options = config.get('yt-dlp', 'yt_dlp_options')
-use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
+yt_dlp_options = config.get('yt-dlp', 'yt_dlp_options')
 
 # Initialize global variables
 download_directory = os.getcwd()  # Default to current working directory
 yt_dlp_options = ""  # Default yt-dlp options
 retry_delay = 15  # Default retry delay in minutes
 queue = []  # In-memory download queue
-
-class bcolors:
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-def ensure_header():
-    """Ensure that the configuration file starts with a section header [yt-dlp]."""
-    if not os.path.exists(config_file_path):
-        with open(config_file_path, 'w') as f:
-            f.write("[yt-dlp]\n")
-            f.write("download_directory=/home/$USER/Downloads\n")
-            f.write("options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2\n")
-            f.write("use_temp_folder=n\n")
-    else:
-        with open(config_file_path, 'r+') as f:
-            lines = f.readlines()
-            if not lines or not lines[0].startswith("["):
-                # Insert header if the first line doesn't start with [
-                f.seek(0, 0)
-                f.write("[yt-dlp]\n" + "".join(lines))
 
 # Check if the configuration file exists
 if not os.path.exists(config_file_path):
@@ -92,13 +125,6 @@ def set_temp_folder_option(temp_option):
         ensure_header()
     
     print(f"Temporary folder option set to {use_temp_folder}")
-
-# Command handler for temp
-if len(sys.argv) > 1 and sys.argv[1] == "temp":
-    if len(sys.argv) == 3:
-        set_temp_folder_option(sys.argv[2])
-    else:
-        print("Usage: python yt_queue.py temp <y|n>")
 
 def load_config():
     global download_directory, yt_dlp_options, retry_delay
