@@ -9,8 +9,8 @@ INSTALLATION:
 
 CONFIGURATION:
   
-  There are two files which are created for use with the program. The files are created in ```~/.config/yt-dlp-sc``` and are ```options.conf``` and ```queue.txt```. The options.conf file is where custom
-  configuration is stored, and queue.txt is where the download queue is stored.
+  There are two files which are created for use with the program. The files are created in ```~/.config/yt-dlp-sc``` and are ```options.conf``` and ```queue.txt```. The ```options.conf``` file is where custom
+  configuration is stored, and ```queue.txt``` is where the download queue is stored. The script may throw a couple errors on first execution, but it will generate a default ```options.conf``` and a blank ```queue.txt``` file.
 
 USAGE:
   
