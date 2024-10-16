@@ -8,7 +8,6 @@ import shutil
 # Define the path to the configuration file and the queue file
 config_file_path = os.path.expanduser('~/.config/yt-dlp-sc/options.conf')
 queue_file_path = os.path.expanduser('~/.config/yt-dlp-sc/queue.txt')
-use_temp_folder = "n"
 
 def ensure_header():
     """Ensure that the configuration file starts with a section header [yt-dlp]."""
@@ -17,6 +16,7 @@ def ensure_header():
             f.write("[yt-dlp]\n")
             f.write("download_directory=/home/$USER/Downloads\n")
             f.write("options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2\n")
+            f.write("use_temp_folder=n\n")
     else:
         with open(config_file_path, 'r+') as f:
             lines = f.readlines()
@@ -89,6 +89,7 @@ options = config.get('yt-dlp', 'yt_dlp_options')
 download_directory = os.getcwd()  # Default to current working directory
 yt_dlp_options = ""  # Default yt-dlp options
 retry_delay = 15  # Default retry delay in minutes
+use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
 queue = []  # In-memory download queue
 
 def load_config():
@@ -194,12 +195,6 @@ def add_to_queue(link):
     queue.append(link)
     save_queue()  # Save the updated queue to the file
     print(f"Added to queue: {link}")
-
-def show_queue():
-    print(f"Current settings:")
-    print(f"Download directory is set to: {download_directory}")
-    print(f"Delay is set to: {retry_delay} minutes")
-    print(f"yt-dlp options are set to: {yt_dlp_options}")
 
     if not queue:
         print("Current download queue is empty.")
@@ -334,6 +329,13 @@ def move_files_to_final_directory(temp_dir):
         shutil.move(temp_file_path, final_file_path)
 
     print("All downloaded files have been moved to the final directory.")
+
+def show_queue():
+    print(f"Current settings:")
+    print(f"Download directory is: {download_directory}")
+    print(f"Delay is set to: {retry_delay} minutes")
+    print(f"Temp download folder is set to: {use_temp_folder}")
+    print(f"yt-dlp options are: {yt_dlp_options}")
 
 def main():
     load_config()  # Load configuration
