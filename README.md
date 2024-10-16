@@ -5,7 +5,7 @@
 
 INSTALLATION:
   
-  I manually put yt-dlp-sc.py in ```/usr/bin/yt-dlp-sc/``` and added the alias to my terminal as ```alias yt='python /usr/bin/yt-dlp-sc/yt_queue.py'```
+  I manually put ```yt-dlp-sc.py``` in ```/usr/bin/yt-dlp-sc/``` and added the alias to my terminal as ```alias yt='python /usr/bin/yt-dlp-sc/yt_queue.py'```
 
 CONFIGURATION:
   
