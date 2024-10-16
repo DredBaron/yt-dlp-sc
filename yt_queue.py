@@ -9,6 +9,29 @@ import shutil
 config_file_path = os.path.expanduser('~/.config/yt-dlp-sc/options.conf')
 queue_file_path = os.path.expanduser('~/.config/yt-dlp-sc/queue.txt')
 
+# Initialize ConfigParser and read the config
+config = configparser.ConfigParser()
+config.read(config_file_path)
+
+# Get user options
+download_directory = config.get('yt-dlp', 'download_directory')
+options = config.get('yt-dlp', 'yt_dlp_options')
+use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
+
+# Initialize global variables
+download_directory = os.getcwd()  # Default to current working directory
+yt_dlp_options = ""  # Default yt-dlp options
+retry_delay = 15  # Default retry delay in minutes
+queue = []  # In-memory download queue
+
+class bcolors:
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 def ensure_header():
     """Ensure that the configuration file starts with a section header [yt-dlp]."""
     if not os.path.exists(config_file_path):
@@ -76,21 +99,6 @@ if len(sys.argv) > 1 and sys.argv[1] == "temp":
         set_temp_folder_option(sys.argv[2])
     else:
         print("Usage: python yt_queue.py temp <y|n>")
-
-# Initialize ConfigParser and read the config
-config = configparser.ConfigParser()
-config.read(config_file_path)
-
-# Get options and download directory
-download_directory = config.get('yt-dlp', 'download_directory')
-options = config.get('yt-dlp', 'yt_dlp_options')
-
-# Initialize global variables
-download_directory = os.getcwd()  # Default to current working directory
-yt_dlp_options = ""  # Default yt-dlp options
-retry_delay = 15  # Default retry delay in minutes
-use_temp_folder = config.get('yt-dlp', 'use_temp_folder')
-queue = []  # In-memory download queue
 
 def load_config():
     global download_directory, yt_dlp_options, retry_delay
@@ -245,7 +253,6 @@ def set_yt_dlp_options(options):
 def download_queue():
     global queue
     options = load_options()  # Load the latest configuration options
-    use_temp_folder = options.get("use_temp_folder", "n").lower() == "y"  # Check if temp folder is enabled
 
     # Define the temporary directory if temp folder option is enabled
     if use_temp_folder == "y":
@@ -331,11 +338,18 @@ def move_files_to_final_directory(temp_dir):
     print("All downloaded files have been moved to the final directory.")
 
 def show_queue():
-    print(f"Current settings:")
-    print(f"Download directory is: {download_directory}")
-    print(f"Delay is set to: {retry_delay} minutes")
-    print(f"Temp download folder is set to: {use_temp_folder}")
-    print(f"yt-dlp options are: {yt_dlp_options}")
+    print(f"{bcolors.BOLD}{bcolors.OKGREEN}Current settings:\n{bcolors.ENDC}")
+    print(f"{bcolors.UNDERLINE}Download directory is:{bcolors.ENDC}")
+    print(f"{bcolors.OKBLUE}{download_directory}\n{bcolors.ENDC}")
+    print(f"{bcolors.UNDERLINE}Delay is set to:{bcolors.ENDC}")
+    print(f"{bcolors.OKBLUE}{retry_delay} minutes\n{bcolors.ENDC}")
+    print(f"{bcolors.UNDERLINE}Temp download folder is set to:{bcolors.ENDC}")
+    print(f"{bcolors.OKBLUE}{use_temp_folder}\n{bcolors.ENDC}")
+    print(f"{bcolors.UNDERLINE}yt-dlp options are:{bcolors.ENDC}")
+    print(f"{bcolors.OKBLUE}{yt_dlp_options}\n{bcolors.ENDC}")
+    print(f"{bcolors.OKBLUE}{bcolors.BOLD}{bcolors.OKGREEN}Current download queue:{bcolors.ENDC}")
+    for index, link in enumerate(queue):
+        print(f"{bcolors.OKCYAN}{index} - {link}{bcolors.ENDC}")
 
 def main():
     load_config()  # Load configuration
