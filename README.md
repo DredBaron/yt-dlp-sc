@@ -19,7 +19,7 @@ CONFIGURATION:
 
 USAGE:
   
-  The program has a few different options, running it with no options or with help shows the help page.
+  The program has a few different options, running it with no options or with ```help``` shows the help page.
 ```
     Commands:
     - add <link>      : Add a link to the download queue.
