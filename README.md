@@ -27,6 +27,7 @@ USAGE:
     - clear           : Clears the download queue manually.
     - temp <y|n>      : Enables or disables the temporary download folder option.
     - settemp <path>  : Sets the temporary download directory.
+    - supp <y|n>      : Enables or disables the yt-dlp output suppression, showing only the progress bar
     - help            : Show this help message.
 ```
 OPTIONS:
@@ -57,12 +58,27 @@ OPTIONS:
   ```settemp``` - Sets the temporary download directory location. This and ```setdir``` have collision detection, as there is no reason to waste time moving files to the same directory. This
   directory will house a file called ```downloaded_videos.txt```, this is the yt-dlp archive file. Once the download is complete and all files are moved to the destination directory, this
   file is deleted.
+
+  ```supp <y|n>``` - Enables or disables the yt-dlp output suppression. WHen disabled, there is no change to the standard yt-dlp output. When enabled, the output is rolled into a little box
+  at the bottom of the terminal, displaying, for example:
+  
+```
+╭───────────────────────────────────────────────── Download Progress ─────────────────────────────────────────────────╮
+│ Downloading fragment 96/1018 | ETA: 00:36 at ~ 47.10MiB/s | Total size ~ 1.68GiB                                    │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+```
+╭───────────────────────────────────────────────── Merging Progress ──────────────────────────────────────────────────╮
+│ Merging files into final file                                                                                       │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
   
   ```help``` - Shows the help menu.
 
 FUTURE PLANS:
 
-  Add an auto-clear of the queue after all files have been downloaded, so users don't have to do it manually.
+  Nothing specific on the docket as of now, but this is subject to change on a whim.
 
 >[!NOTE]
 >This program uses the [yt-dlp](https://github.com/yt-dlp/yt-dlp) github repository, and is vulnerable to any and all issues present within. Any issues with yt-dlp will **MOST LIKLEY** carry over to this program, thus performance
