@@ -79,11 +79,11 @@ OPTIONS:
 FUTURE PLANS:
 
   Add in the video counter for playlists/channels, to make the downloader look closer to this:
-```
+<pre>
 ╭──────────────────────────────────────── Download Progress ────────────────────────────────────────╮
-│ Downloading fragment 96/1018 | ETA: 00:36 at ~ 47.10MiB/s | Total size ~ 1.68GiB | Video 1 of 6   │
+│ Downloading fragment 96/1018 | ETA: 00:36 at ~ 47.10MiB/s | Total size ~ 1.68GiB | <b>Video 1 of 6</b>   │
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
-```
+</pre>
 
 
 >[!NOTE]
