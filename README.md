@@ -6,8 +6,11 @@
 INSTALLATION:
   
   ```git clone https://github.com/dredbaron/yt-dlp-sc```
+  
   ```cd yt-dlp-sc```
+  
   ```make install```
+  
 
 CONFIGURATION:
   
