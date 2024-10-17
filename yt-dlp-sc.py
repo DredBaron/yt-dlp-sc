@@ -289,7 +289,7 @@ def show_help():
     - help            : Show this help message.
     """
     # Clears the terminal
-    #print(f"\033c")
+    print(f"\033c")
     print(help_text)
 
 # Adds input link to the queue
@@ -492,7 +492,7 @@ def move_files_to_final_directory(temp_dir):
 def show_settings():
 
     # Clears the terminal
-    #print(f"\033c")
+    print(f"\033c")
 
     # Print ASCII Art Header
     art = """┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
