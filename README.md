@@ -78,7 +78,14 @@ OPTIONS:
 
 FUTURE PLANS:
 
-  Nothing specific on the docket as of now, but this is subject to change on a whim.
+  Add in the video counter for playlists/channels, to make the downloader look closer to this:
+<details> 
+  <summary>Desired output with video counter </summary>
+╭──────────────────────────────────────── Download Progress ────────────────────────────────────────╮
+│ Downloading fragment 96/1018 | ETA: 00:36 at ~ 47.10MiB/s | Total size ~ 1.68GiB | Video 1 of 6   │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
+</details>
+
 
 >[!NOTE]
 >This program uses the [yt-dlp](https://github.com/yt-dlp/yt-dlp) github repository, and is vulnerable to any and all issues present within. Any issues with yt-dlp will **MOST LIKLEY** carry over to this program, thus performance
