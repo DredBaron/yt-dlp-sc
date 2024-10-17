@@ -21,11 +21,12 @@ USAGE:
     - show            : Show the current download queue and settings.
     - remove <index>  : Remove a link from the queue by index.
     - setdir <path>   : Set the download directory.
-    - setdelay <min>  : Set the retry delay in minutes. **!!Implemented, but untested!!**
+    - setdelay <min>  : Set the retry delay in minutes.
     - options "opts"  : Set yt-dlp options.
     - start           : Start the download session.
     - clear           : Clears the download queue manually.
     - temp <y|n>      : Enables or disables the temporary download folder option.
+    - settemp <path>  : Sets the temporary download directory.
     - help            : Show this help message.
 ```
 OPTIONS:
@@ -49,8 +50,13 @@ OPTIONS:
 
   ```temp``` - Enables or disables the temporary download folder. The default is ```n``` This folder is located at ```~/yt-ddlp-sc/``` and houses the video, audio, and parts until the full
   video is downloaded and combined. The final video is moved to the proper folder, and a record of the download is kept using  yt-dlp's built-in ```--download-archive``` function. This way,
-  videos are not downloaded in duplicate. The file(s) are moved after all files in the download queue have completed. The intent behind this is to use the (probably) faster read/write speed of the home drive to do
-  all the I/O work, then moving the file to whatever drive is specified for storage. In my experience, this is best set to ```y``` when the final directory is either a NAS or a HDD. Or both.
+  videos are not downloaded in duplicate. The file(s) are moved after all files in the download queue have completed. The intent behind this is to use the (probably) faster read/write speed
+  of the home drive to do all the I/O work, then moving the file to whatever drive is specified for storage. In my experience, this is best set to ```y``` when the final directory is either
+  a NAS or a HDD. Or both.
+
+  ```settemp``` - Sets the temporary download directory location. This and ```setdir``` have collision detection, as there is no reason to waste time moving files to the same directory. This
+  directory will house a file called ```downloaded_videos.txt```, this is the yt-dlp archive file. Once the download is complete and all files are moved to the destination directory, this
+  file is deleted.
   
   ```help``` - Shows the help menu.
 
