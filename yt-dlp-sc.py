@@ -358,7 +358,6 @@ def download_queue():
             command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
             print(f"{bcolors.OKCYAN}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
             print(f"{bcolors.OKCYAN}Command (raw):{bcolors.ENDC} {command}\n")
-            print(f"{bcolors.ERROR}Downloading to:{bcolors.ENDC} {current_download_directory}")
         else:
             command = ["yt-dlp"] + yt_dlp_options.split() + [link]
             print(f"{bcolors.OKCYAN}Command:{bcolors.ENDC} {" ".join(command)}\n")
