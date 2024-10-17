@@ -236,11 +236,11 @@ def clear_queue():
             for name in files:
                 file_path = os.path.join(root, name)
                 print(f"Deleting file: {file_path}")
-                os.remove(file_path)  # Delete each file
+                os.remove(file_path)
             for name in dirs:
                 dir_path = os.path.join(root, name)
                 print(f"Deleting temporary download folder")
-                shutil.rmtree(dir_path)  # Delete each directory
+                shutil.rmtree(dir_path)
         print(f"All contents in {yt_dlp_folder} cleared.")
     else:
         print(f"{yt_dlp_folder} does not exist.")
@@ -257,7 +257,7 @@ def show_help():
     - show            : Show the current download queue and settings.
     - remove <index>  : Remove a link from the queue by index.
     - setdir <path>   : Set the download directory.
-    - setdelay <min>  : Set the retry delay in minutes.
+    - setdelay <min>  : Set the retry delay in minutes. *FEATURE HAS BEEN DISABLED*, see release 1.3.0 for notes.
     - options "opts"  : Set yt-dlp options.
     - start           : Start the download session.
     - clear           : Clears the download queue manually.
@@ -315,6 +315,8 @@ def contains_substring(main_string, substring):
 
 # Starts the downloading of each link in queue, sequentially.
 def download_queue():
+    global download_archive
+    global temp_download_directory
     global queue
     print(f"yt-dlp options set to: {yt_dlp_options}\n")
     
@@ -333,7 +335,7 @@ def download_queue():
         # Get the first link from the queue
         link = queue[0]
               
-        print(f"{bcolors.OKCYAN}Checking Queue URL. Invalid/Nonresponsive URL will be removed.{bcolors.ENDC}")
+        print(f"{bcolors.OKGREEN}Checking Queue URL. Invalid/Nonresponsive URL will be removed.{bcolors.ENDC}")
         print(f"{link}\n")
         if "www.youtube.com/" not in link:
             print(f"URL is not for Youtube, removing from queue.\n")
@@ -341,7 +343,7 @@ def download_queue():
             save_queue()
         else:
             print(f"{bcolors.OKCYAN}URL looks like it belongs to Youtube.{bcolors.ENDC}\n")
-            print(f"{bcolors.OKGREEN}Checking responsiveness{bcolors.ENDC}\n")
+            print(f"{bcolors.OKCYAN}Checking responsiveness{bcolors.ENDC}\n")
         
         if not check_ping(link):
             print(f"{bcolors.ERROR}Removing URL:{bcolors.ENDC} {link}\n")
@@ -355,13 +357,17 @@ def download_queue():
             download_archive = os.path.expanduser("~/yt-dlp-sc/downloaded_videos.txt")
             command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
             print(f"{bcolors.OKCYAN}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+            print(f"{bcolors.OKCYAN}Command (raw):{bcolors.ENDC} {command}\n")
+            print(f"{bcolors.ERROR}Downloading to:{bcolors.ENDC} {current_download_directory}")
         else:
             command = ["yt-dlp"] + yt_dlp_options.split() + [link]
             print(f"{bcolors.OKCYAN}Command:{bcolors.ENDC} {" ".join(command)}\n")
             download_archive = os.path.expanduser("~/yt-dlp-sc/downloaded_videos.txt")
+            print(f"{bcolors.OKCYAN}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+            print(f"{bcolors.OKCYAN}Command (raw):{bcolors.ENDC} {command}\n")
 
         try:
-            subprocess.run(command, check=True, cwd=os.path.expanduser(download_directory), stderr=subprocess.PIPE)
+            subprocess.run(command, check=True, cwd=os.path.expanduser(current_download_directory), stderr=subprocess.PIPE)
             print(f"{bcolors.OKGREEN}Finished downloading:{bcolors.ENDC} {link}\n")
             queue.pop(0)
             save_queue()
