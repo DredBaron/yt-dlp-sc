@@ -39,7 +39,7 @@ OPTIONS:
   
   ```setdir``` - Sets the download directory. I have not tested this with relative filepaths, so I would recommend absolute.
   
-  ```setdelay``` - If the program detects the "Please log in to prove you are not a bot" error, the delay can be set for how long the program will wait in minutes to auto-resume.
+  ```setdelay``` - **FEATURE HAS BEEN DISABLED**, see release 1.3.0 for notes. If the program detects the "Please log in to prove you are not a bot" error, the delay can be set for how long the program will wait in minutes to auto-resume.
   
   ```options``` - Lets you set custom yt-dlp options. The default is 
   ```-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2```
