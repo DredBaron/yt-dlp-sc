@@ -1,25 +1,26 @@
+#! /home/todd/.local/yt-dlp-sc/bin/python3
+
+
+from rich.live import Live
+from rich.panel import Panel
 import os
 import sys
 import subprocess
 import configparser
 import shutil
 import requests
-from rich.live import Live
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, BarColumn, TextColumn
 import re
 
 # Text colors
 class bcolors:
+    COMPLETED = '\033[92m'
     OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
     OKRED = '\033[91m'
+    OKSTATUS = '\033[96m'
     ERROR = '\033[93m'
-    ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+    ENDC = '\033[0m'
 
 # Define the path to the configuration and queue files
 config_file_path = os.path.expanduser("~/.config/yt-dlp-sc/options.conf")
@@ -33,40 +34,56 @@ use_temp_folder = ""
 yt_dlp_options = ""
 queue = []
 
-# Writes the default settings to the options file if the file is either blank or does not exist
-def write_default_options():
-    global config_file_path
+def create_yt_dlp_sc_folder():
+    if os.access(os.path.expanduser("~/.config"), os.W_OK) and not os.path.isdir(os.path.expanduser("~/.config/yt-dlp-sc/")):
+        os.makedirs(os.path.expanduser("~/.config/yt-dlp-sc/"))
+        print(f"Created ~/.config/yt-dlp-sc/")
+        return
+    elif os.path.isdir(os.path.expanduser("~/.config/yt-dlp-sc/")):
+        print(f"~/.config/yt-dlp-sc already exists, skipping.")
+        return
+    elif os.path.exists(os.path.expanduser("~/.config")) and not os.access(os.path.expanduser("~/.config"), os.W_OK):
+        print(f"Directory ~/.config/ is not writable, please allow write permissions, then try running this program again.")
+        return
+
+def create_config():
     default_options = """[yt-dlp]
 download_directory=~/Downloads
 temp_download_directory=~/yt-dlp-sc/
 yt_dlp_options=-f 'bv*[height<=1080][ext=mp4]+ba*[ext=m4a]' -N 2
 use_temp_folder=False
 suppress_output=True"""
-        
-    if os.path.exists(config_file_path):
-        print(f"{bcolors.ERROR}DEBUG:{bcolors.ENDC} config file exists, not sure of contents.")
-        print(f"Populating existing configuration file with default settings.")
+    print(f"Creating configuration file with default settings.")
+    with open(config_file_path, 'w') as f:
+        f.writelines(default_options)
+    return
 
-    if not os.path.exists(config_file_path):
-        print(f"{bcolors.ERROR}DEBUG:{bcolors.ENDC} config file does not exist.")
-        os.makedirs(os.path.expanduser("~/.config/yt-dlp-sc/"))
-        print(f"{bcolors.OKGREEN}Created ~/.config/yt-dlp-sc/{bcolors.ENDC}")
-        print(f"{bcolors.ERROR}Configuration file not found:{bcolors.ENDC} {config_file_path}")
-        print(f"Creating configuration file with default settings.")
-        with open(config_file_path, 'w') as f:
-            f.writelines(default_options)
-        return
-    
-    if not os.access(os.path.expanduser("~/.config/"), os.W_OK) or not os.path.exists(os.path.expanduser("~/.config/")):
-        print(f"{bcolors.ERROR}DEBUG:{bcolors.ENDC} ~/.config not writable")
-        print(f"{bcolors.ERROR}Error:{bcolors.ENDC} ~/.config either does not exist, or cannot be written to.")
-        print(f"{bcolors.OKCYAN}Please run:{bcolors.ENDC} mkdir ~/.config/yt-dlp-sc/ && chown -R $USER:$USER ~/.config/yt-dlp-sc/")
-        return
+# Writes the default settings to the options file if the file is either blank or does not exist
+def write_default_options():
+    global config_file_path
+
         
-        with open(config_file_path, 'w') as f:
-            f.writelines(default_options)
-        return
-    if os.access(os.path.expanduser("~/.config/"), os.W_OK) and os.path.exists(os.path.expanduser("~/.config/")) and os.path.exists(config_file_path):
+    # Config file exists. Throw 'Already Exists' error
+    if os.path.exists(config_file_path):
+        print(f"{bcolors.ERROR}DEBUG Error 01:{bcolors.ENDC} config file exists, not sure of contents.")
+        print(f"Populating existing configuration file with default settings. Returning")
+        create_config()
+
+    # ~/.config/yt-dlp-sc/ exists, but there is no config file. Throwing 'Does Not Exist' error and creatign default config file
+    elif not os.path.exists(config_file_path) and os.access(os.path.expanduser("~/.config/yt-dlp-sc/"), os.W_OK):
+        print(f"{bcolors.ERROR}DEBUG Error 02:{bcolors.ENDC} config file does not exist.")
+        print(f"{bcolors.ERROR}Configuration file not found:{bcolors.ENDC} {config_file_path}")
+        create_config()
+
+    # ~/.config/yt-dlp-sc does not exist. Throwing 'Does Not Exist' error and creating directory and config folder inside.
+    elif not os.path.exists(os.path.expanduser("~/.config/yt-dlp-sc/")):
+        print(f"{bcolors.ERROR}DEBUG Error 03:{bcolors.ENDC} ~/.config/yt-dlp-sc does not exist. Attempting to create and populate.")        
+        create_yt_dlp_sc_folder()
+        create_config()
+
+    # ~/.config is either unwritable or does not exist. Throwing 'Does Not Exist' error and advising the user.
+    elif not os.access(os.path.expanduser("~/.config/"), os.W_OK):
+        print(f"{bcolors.ERROR}Error:{bcolors.ENDC} ~/.config either does not exist, or cannot be written to.")
         return
 
 # Checks if a directory exists and is writable
@@ -148,11 +165,13 @@ def load_queue():
     global queue
     if os.path.exists(queue_file_path):
         with open(queue_file_path, 'r') as f:
-            queue = [line.strip() for line in f if line.strip()]  # Load non-empty lines
-    else: # Write an empty queue file
+            queue = [line.strip() for line in f if line.strip()]
+    elif not os.path.exists(queue_file_path):
         print(f"{bcolors.ERROR}Queue file not found,{bcolors.ENDC} generating empty queue.")
         with open(queue_file_path, 'w') as f:
             pass
+    else:
+        print(f"{bcolors.ERROR}DEBUG Error 10:{bcolors.ENDC} Error determining queue file status.")
 
 # Saves the updated set_temp_folder to the options file
 def set_temp_directory_option(temp_folder_option):
@@ -160,8 +179,8 @@ def set_temp_directory_option(temp_folder_option):
     if temp_folder_option.lower() == "y":
         use_temp_folder = True
         save_config()
+        print(f"Temporary folder option is {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
         return True
-        print(f"Temporary folder option is {bcolors.OKGREEN}enabled{bcolors.ENDC}.")
     elif temp_folder_option.lower() == "n":
         use_temp_folder = False
         save_config()
@@ -175,7 +194,7 @@ def set_suppress_option(suppress_option):
     if suppress_option.lower() == "y":
         suppress_output = True
         save_config()
-        print(f"Suppress option is {bcolors.OKGREEN}enabled{bcolors.ENDC}.")
+        print(f"Suppress option is {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
         return True
     elif suppress_option.lower() == "n":
         suppress_output = False
@@ -371,7 +390,7 @@ def download_queue():
     # Check if temporary folder option is enabled
     if use_temp_folder:
         current_download_directory = os.path.expanduser(temp_download_directory)
-        print(f"Temporary folder is {bcolors.OKGREEN}enabled{bcolors.ENDC}.")
+        print(f"Temporary folder is {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
         print(f"Downloading to temporary folder: {current_download_directory}\n")
     else:
         # Use final directory if temp folder is not enabled
@@ -381,7 +400,7 @@ def download_queue():
     
     # Check if the suppress option is enabled
     if suppress_output:
-        print(f"Suppression is {bcolors.OKGREEN}enabled{bcolors.ENDC}.\n")
+        print(f"Suppression is {bcolors.COMPLETED}enabled{bcolors.ENDC}.\n")
     else:
         print(f"Suppression is {bcolors.OKRED}disabled{bcolors.ENDC}.\n")
 
@@ -389,14 +408,14 @@ def download_queue():
         # Get the first link from the queue
         link = queue[0]
               
-        print(f"{bcolors.OKGREEN}Checking Queue URL:{bcolors.ENDC} {link}")
+        print(f"{bcolors.COMPLETED}Checking Queue URL:{bcolors.ENDC} {link}")
         if "www.youtube.com/" not in link:
             print(f"URL is not from Youtube, removing from queue.\n")
             queue.pop(0)
             save_queue()
         else:
-            print(f"{bcolors.OKCYAN}URL looks like it belongs to Youtube.{bcolors.ENDC}\n")
-            print(f"{bcolors.OKCYAN}Checking responsiveness{bcolors.ENDC}\n")
+            print(f"{bcolors.OKSTATUS}URL looks like it belongs to Youtube.{bcolors.ENDC}\n")
+            print(f"{bcolors.OKSTATUS}Checking responsiveness{bcolors.ENDC}\n")
         
         if not check_ping(link):
             print(f"{bcolors.ERROR}Removing URL:{bcolors.ENDC} {link}\n")
@@ -404,18 +423,18 @@ def download_queue():
             save_queue()
             continue
 
-        print(f"{bcolors.OKGREEN}URL is responsive. Proceeding with download{bcolors.ENDC}\n")            
+        print(f"{bcolors.COMPLETED}URL is responsive. Proceeding with download{bcolors.ENDC}\n")            
 
         if use_temp_folder:
             download_archive = os.path.expanduser("~/yt-dlp-sc/downloaded_videos.txt")
             command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
-            print(f"{bcolors.OKCYAN}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
-            print(f"{bcolors.OKCYAN}Command (raw):{bcolors.ENDC} {command}\n")
+            print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+            print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
         elif not use_temp_folder:
             command = ["yt-dlp"] + yt_dlp_options.split() + [link]
             download_archive = os.path.expanduser("~/yt-dlp-sc/downloaded_videos.txt")
-            print(f"{bcolors.OKCYAN}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
-            print(f"{bcolors.OKCYAN}Command (raw):{bcolors.ENDC} {command}\n")
+            print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+            print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
             
         if suppress_output:
             initial_panel = Panel("Starting Download...", border_style="green")
@@ -443,7 +462,7 @@ def download_queue():
                             panel = Panel(formatted_line, title="Merging Progress", border_style="blue")
                             live.update(panel)
 
-                    print(f"{bcolors.OKGREEN}Finished downloading:{bcolors.ENDC} {link}\n")
+                    print(f"{bcolors.COMPLETED}Finished downloading:{bcolors.ENDC} {link}\n")
                     queue.pop(0)
                     save_queue()
 
@@ -457,7 +476,7 @@ def download_queue():
         elif not suppress_output:
             try:
                 subprocess.run(command, check=True, cwd=os.path.expanduser(current_download_directory), stderr=subprocess.PIPE)
-                print(f"{bcolors.OKGREEN}Finished downloading:{bcolors.ENDC} {link}\n")
+                print(f"{bcolors.COMPLETED}Finished downloading:{bcolors.ENDC} {link}\n")
                 queue.pop(0)
                 save_queue()
             except subprocess.CalledProcessError as e:
@@ -491,17 +510,23 @@ def move_files_to_final_directory(temp_dir):
 # Prints the current settings and links in queue
 def show_settings():
 
+    if download_directory == "~" and temp_download_directory == "~" and yt_dlp_options == "":
+        write_default_options()
+        if download_directory == "~" and temp_download_directory == "~" and yt_dlp_options == "":
+            print(f"  {bcolors.ERROR}DEBUG Error 20:{bcolors.ENDC} Program is not seeing default options file, generation seemingly failed.\n")
+
     # Clears the terminal
     print(f"\033c")
 
     # Print ASCII Art Header
-    art = """┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        _                  _ _                                   __    ____    _____  ┃
-┃       | |                | | |                                 /_ |  |__  \\  | ____| ┃
-┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   _| |   __)  | | |__   ┃
-┃ | | | | __| |______|  / _` | | '_ \\  |______| / __|/ __|  \\ \\ / | |  |__  <  |__  \\  ┃
-┃ | |_| | |_           | (_| | | |_) |          \\__ | (__    \\ V /| |   __)  |  ___) | ┃
-┃  \\__, |\\__|           \\__,_|_| .__/           |___/\\___|    \\_/ |_|()|____/()|____/  ┃
+    art = r"""
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃        _                  _ _                                   ___    ___    ___    ┃
+┃       | |                | | |                                 |__ \  / _ \  / _ \   ┃
+┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   __ ) || | | || | | |  ┃
+┃ | | | | __| |______|  / _` | | '_ \  |______| / __|/ __|  \ \ /  / / | | | || | | |  ┃
+┃ | |_| | |_           | (_| | | |_) |          \__ | (__    \ V  / /_ | |_| || |_| |  ┃
+┃  \__, |\__|           \__,_|_| .__/           |___/\___|    \_/|____()\___/()\___/   ┃
 ┃   __/ |                      | |                                                     ┃
 ┃  |___/                       |_|                                                     ┃
 ┃                                                By: DredBaron 🯆                       ┃
@@ -509,30 +534,25 @@ def show_settings():
     """
     print(art)
 
-    if download_directory == "~" and temp_download_directory == "~":
-        write_default_options()
-        print(f"  {bcolors.ERROR}Note:{bcolors.ENDC} Looks like the options file had to be generated. Please re-run the last command.\n")
-        return
+    print(f"  {bcolors.BOLD}{bcolors.COMPLETED}Current settings:\n{bcolors.ENDC}")
+    print(f"  {bcolors.UNDERLINE}Download directory is:{bcolors.ENDC}")
+    print(f"  {bcolors.OKBLUE}{download_directory}\n{bcolors.ENDC}")
+    print(f"  {bcolors.UNDERLINE}Temporary download folder is:{bcolors.ENDC}")
+    if use_temp_folder:
+        print(f"  {bcolors.OKBLUE}{temp_download_directory}\n{bcolors.ENDC}")
+    elif not use_temp_folder:
+        print(f"  {bcolors.ERROR}Disabled\n{bcolors.ENDC}")
     else:
-        print(f"  {bcolors.BOLD}{bcolors.OKGREEN}Current settings:\n{bcolors.ENDC}")
-        print(f"  {bcolors.UNDERLINE}Download directory is:{bcolors.ENDC}")
-        print(f"  {bcolors.OKBLUE}{download_directory}\n{bcolors.ENDC}")
-        print(f"  {bcolors.UNDERLINE}Temporary download folder is:{bcolors.ENDC}")
-        if use_temp_folder:
-            print(f"  {bcolors.OKBLUE}{temp_download_directory}\n{bcolors.ENDC}")
-        elif not use_temp_folder:
-            print(f"  {bcolors.ERROR}Disabled\n{bcolors.ENDC}")
-        else:
-            print(f"  {bcolors.ERROR}Temporary download folder is not set.\n{bcolors.ENDC}")
-        print(f"  {bcolors.UNDERLINE}yt-dlp options are:{bcolors.ENDC}")
-        print(f"  {bcolors.OKBLUE}{yt_dlp_options}\n{bcolors.ENDC}")
-        print(f"  {bcolors.OKBLUE}{bcolors.BOLD}{bcolors.OKGREEN}Current download queue:{bcolors.ENDC}")
-        if not is_file_blank(queue_file_path):
-            for index, link in enumerate(queue):
-                print(f"  {bcolors.OKCYAN}{index} - {link}{bcolors.ENDC}")
-            print(f"")
-        else:
-            print(f"  Nothing in queue\n")
+        print(f"  {bcolors.ERROR}Temporary download folder is not set.\n{bcolors.ENDC}")
+    print(f"  {bcolors.UNDERLINE}yt-dlp options are:{bcolors.ENDC}")
+    print(f"  {bcolors.OKBLUE}{yt_dlp_options}\n{bcolors.ENDC}")
+    print(f"  {bcolors.OKBLUE}{bcolors.BOLD}{bcolors.COMPLETED}Current download queue:{bcolors.ENDC}")
+    if not is_file_blank(queue_file_path):
+        for index, link in enumerate(queue):
+            print(f"  {bcolors.OKSTATUS}{index} - {link}{bcolors.ENDC}")
+        print(f"")
+    else:
+        print(f"  Nothing in queue\n")
 
 # Main loop, handles command options
 def main():
