@@ -65,7 +65,7 @@ OPTIONS:
   directory will house a file called ```downloaded_videos.txt```, this is the yt-dlp archive file. Once the download is complete and all files are moved to the destination directory, this
   file is deleted.
 
-  ```supp <y|n>``` - Enables or disables the yt-dlp output suppression. WHen disabled, there is no change to the standard yt-dlp output. When enabled, the output is rolled into a little box
+  ```supp <y|n>``` - Enables or disables the yt-dlp output suppression. When disabled, there is no change to the standard yt-dlp output. When enabled, the output is rolled into a little box
   at the bottom of the terminal, displaying, for example:
   
 ```
