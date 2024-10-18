@@ -5,7 +5,11 @@
 
 INSTALLATION:
   
-  I manually put ```yt-dlp-sc.py``` in ```/usr/bin/yt-dlp-sc/``` and added the alias to my terminal as ```alias yt='python /usr/bin/yt-dlp-sc/yt-dlp-sc.py'```
+  ```git clone https://github.com/dredbaron/yt-dlp-sc```
+
+  ```cd yt-dlp-sc```
+
+  ```make install```
 
 CONFIGURATION:
   
@@ -16,7 +20,7 @@ USAGE:
   
   The program has a few different options, running it with no options or with help shows the help page.
 ```
-    Commands:
+  Commands:
     - add <link>      : Add a link to the download queue.
     - show            : Show the current download queue and settings.
     - remove <index>  : Remove a link from the queue by index.
@@ -27,8 +31,10 @@ USAGE:
     - clear           : Clears the download queue manually.
     - temp <y|n>      : Enables or disables the temporary download folder option.
     - settemp <path>  : Sets the temporary download directory.
-    - supp <y|n>      : Enables or disables the yt-dlp output suppression, showing only the progress bar
+    - supp <y|n>      : Enables or disables the yt-dlp output suppression, showing only the progress bar.
+    - pretty <y|n>    : Enables or disables the 'pretty' menu.
     - help            : Show this help message.
+    - debug <y|n>     : Enables or disables debug output.
 ```
 OPTIONS:
 
@@ -73,18 +79,20 @@ OPTIONS:
 │ Merging files into final file                                                                     │
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
+
+  ```pretty``` - Enables or disabled the pretty version of the UI. Currently, this is just the ASCII art.
   
   ```help``` - Shows the help menu.
 
-FUTURE PLANS:
+   ```debug``` - Enables or disables debug error output, and whether the screen clears on UI refresh.
 
-  Add in the video counter for playlists/channels, to make the downloader look closer to this:
-<pre>
-╭──────────────────────────────────────── Download Progress ────────────────────────────────────────╮
-│ Downloading fragment 96/1018 | ETA: 00:36 at ~ 47.10MiB/s | Total size ~ 1.68GiB | <b>Video 1 of 6</b>   │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
-</pre>
+FUTURE RELEASE PLANS:
 
+* Convert all the options from standalone words to `--` notation, for example changing `add` to `-a`/`--add`. This more closely emulates the terminal style most people are familiar with.
+
+* Create a more <b>responsive</b> UI. Not sure what that exactly means, but that'll get figured out.
+
+* Update `setdir` and `settemp` same collsion to work with `~` symbol
 
 >[!NOTE]
 >This program uses the [yt-dlp](https://github.com/yt-dlp/yt-dlp) github repository, and is vulnerable to any and all issues present within. Any issues with yt-dlp will **MOST LIKLEY** carry over to this program, thus performance
