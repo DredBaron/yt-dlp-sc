@@ -1,6 +1,7 @@
 PREFIX ?= ~/.local
 VENV_DIR = $(PREFIX)/yt-dlp-sc
 BINDIR ?= $(PREFIX)/bin
+CONFDIR = ~/.config/yt-dlp-sc
 PYTHON = $(VENV_DIR)/bin/python3
 PIP = ${VENV_DIR}/bin/pip
 
@@ -13,8 +14,8 @@ help:
 	@echo "---------------HELP-----------------"
 	@echo "make install   - Installs the project"
 	@echo "make uninstall - Uninstalls the project"
-	@echo "make test      - Runs tests"
-	@echo "make clean     - Cleans the pycache"
+	@echo "make test      - Runs Python version tests"
+	@echo "make clean     - Removes the venv"
 	@echo "------------------------------------"
 
 all: install
@@ -30,11 +31,19 @@ install: requirements.txt
 	@${PIP} install -r requirements.txt
 	@echo "Installing yt-dlp-sc.py"
 	@mkdir -p ~/.config/yt-dlp-sc
-	@install -m 644 options.conf ~/.config/yt-dlp-sc/options.conf
+	@touch ~/.config/yt-dlp-sc/options.conf
 	@install -m 755 yt-dlp-sc.py $(BINDIR)/yt-dlp-sc
 	@chmod +x $(BINDIR)/yt-dlp-sc
 	@echo "yt-dlp-sc installed to $(BINDIR)/yt-dlp-sc"
 	@echo "Installation successful. Run 'yt-dlp-sc' to begin."
+
+reinstall: requirements.txt
+	@echo "Reinstalling yt-dlp-sh"
+	@mkdir -p ~/.config/yt-dlp-sc
+	@touch ~/.config/yt-dlp-sc/options.conf
+	@install -m 755 yt-dlp-sc.py $(BINDIR)/yt-dlp-sc
+	@chmod +x $(BINDIR)/yt-dlp-sc
+	@echo "Re-installation successful. Run 'yt-dlp-sc' to begin."
 
 run: venv/bin/activate
 	@${VENV_DIR}/bin/python yt-dlp-sc.py
@@ -48,8 +57,9 @@ uninstall:
 	@rm -f $(BINDIR)/yt-dlp-sc
 	@echo "Uninstalled yt-dlp-sc."
 
-clean:
+clean: uninstall
 	@rm -rf ${VENV_DIR}
+	@rm -rf ${CONFDIR}
 	@echo "Remove venv directory"
 
 test:

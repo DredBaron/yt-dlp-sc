@@ -1,0 +1,33 @@
+ADDITIONS:
+
+* Removed queue removal from `check_ping()`, as this function will now only be used to check. The calling function should determine what to do with the result.
+
+* Changed default temporary download directory to `~/Downloads` from `~/yt-dlp-sc`, as this would have caused issues when moving all files in the directory to the final directory. (Yes, this means that temporary and final directories are the same when the program won't let you do it. I'll figure it out)
+
+* Fixed the formatting of stored yt-dlp download options. Extra brackets were added which caused the download to register invalid options and skip the video.
+
+* Modified makefile to not remove config settings unless `clean` is run.
+
+* Added video counter to cleaned output. Multi-video links will now read `Video # of # size ~ <size>` and single video links will now read as `Video size ~ <size>`.
+
+* Fixed location of `downloaded_videos.txt`. This file was originally hardcoded to `~/yt-dlp-sc/downloaded_videos.txt`, but has been updated to move with the temporary folder.
+
+* Added a `debug` option for error codes and unnecessary outputs, and set the default to `n`.
+
+* Added a `pretty` option for people who care about asthetics. Disabling `pretty` will stop the printing of ASCII art and will simplify the `show` output. The option `pretty` will also not show up in `show`, but will show up in `help`. By default, this option is set to `y`.
+
+* Added the `--version`` option. This will output the current program version.
+
+* Added `make reinstall` to makefile
+
+* Cleaned up initial `options.conf` generation handling. It's a bit more elegant about it now.
+
+* Updated ASCII art to reflect new version number.
+
+FUTURE RELEASE PLANS:
+
+* Convert all the options from standalone words to `--` notation, for example changing `add` to `-a`/`--add`. This more closely emulates the terminal style most people are familiar with.
+
+* Create a more <b>responsive</b> UI. Not sure what that exactly means, but that'll get figured out.
+
+* Update `setdir` and `settemp` same collsion to work with `~` symbol
