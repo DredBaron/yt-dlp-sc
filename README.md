@@ -86,6 +86,8 @@ OPTIONS:
 
    ```debug``` - Enables or disables debug error output, and whether the screen clears on UI refresh.
 
+   ```--version``` - Displays the program version. Not in the help menu yet, but it is a vailid command option as of 2.1.0
+
 FUTURE RELEASE PLANS:
 
 * Convert all the options from standalone words to `--` notation, for example changing `add` to `-a`/`--add`. This more closely emulates the terminal style most people are familiar with.
