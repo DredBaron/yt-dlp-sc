@@ -530,10 +530,10 @@ def download_queue():
             # If the default temporary download folder does not exist, try to create it
             if debug:
                 print(f"Default temporary folder does not exist. Creating {os.path.expanduser(current_download_directory)}")
-            if os.access(os.path.expanduser(current_download_directory), os.W_OK):
+            if os.access(os.path.expanduser("~/Downloads"), os.W_OK):
                 os.makedirs(os.path.expanduser("~/Downloads/yt-dlp-sc/"))
             # If the ~/Downloads folder is not writable, throw an error.
-            elif not os.access(os.path.expanduser(current_download_directory), os.W_OK):
+            elif not os.access(os.path.expanduser("~/Downloads"), os.W_OK):
                 if debug:
                     print(f"DEBUG Error 40: Unable to write to ~/Downloads")
                     return
