@@ -387,7 +387,7 @@ def show_help():
                     Set the temporary download directory.
 
     -s, -suppress
-                    Enables or disables the yt-dlp output suppression, showing only the progress bar.
+                    Enables or disables the yt-dlp output suppression.
 
     -p, --pretty
                     Enables or disables the 'pretty' menu.
@@ -613,7 +613,7 @@ def download_queue():
                                 panel = Panel(formatted_line, title = "Download Progress", border_style = "blue")
                                 live.update(panel)
 
-                        print(f"{bcolors.COMPLETED}Finished downloading:{bcolors.ENDC} {link}\n")
+                        print(f"{bcolors.OKSTATUS}Finished downloading:{bcolors.ENDC} {link}\n")
                         queue.pop(0)
                         save_queue()
 
@@ -625,7 +625,7 @@ def download_queue():
             elif not suppress_output:
                 try:
                     subprocess.run(command, check=True, cwd=os.path.expanduser(current_download_directory), stderr=subprocess.PIPE)
-                    print(f"{bcolors.COMPLETED}Finished downloading:{bcolors.ENDC} {link}\n")
+                    print(f"{bcolors.OKSTATUS}Finished downloading:{bcolors.ENDC} {link}\n")
                     queue.pop(0)
                     save_queue()
                 except subprocess.CalledProcessError as e:
