@@ -579,13 +579,13 @@ def download_queue():
                 download_archive = f"{os.path.expanduser(current_download_directory)}/downloaded_videos.txt"
                 command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
                 if debug:
-                    print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+                    print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {' '.join(command)}\n")
                     print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
 
             elif not use_temp_folder:
                 command = ["yt-dlp"] + yt_dlp_options.split() + [link]
                 if debug:
-                    print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+                    print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {' '.join(command)}\n")
                     print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
 
             if suppress_output:
@@ -808,7 +808,7 @@ def main():
         if len(sys.argv) < 3:
             print(f"Usage: -o/--options <yt-dlp options>")
             return
-        set_yt_dlp_options(" ".join(sys.argv[2:]))
+        set_yt_dlp_options(' '.join(sys.argv[2:]))
     
     # Start command
     elif command == 'start':
