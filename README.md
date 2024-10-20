@@ -47,7 +47,7 @@ USAGE:
                     Set the temporary download directory.
 
     -s, -suppress
-                    Enables or disables the yt-dlp output suppression, showing only the progress bar.
+                    Enables or disables the yt-dlp output suppression.
 
     -p, --pretty
                     Enables or disables the 'pretty' menu.
