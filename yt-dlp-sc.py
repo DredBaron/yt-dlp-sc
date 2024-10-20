@@ -1,4 +1,4 @@
-#! /home/todd/.local/yt-dlp-sc/bin/python3
+#!/usr/bin/env python3
 
 from rich.live import Live
 from rich.panel import Panel
@@ -9,6 +9,7 @@ import configparser
 import shutil
 import requests
 import re
+from yt_dlp import YoutubeDL
 
 # Text colors
 class bcolors:
@@ -38,7 +39,7 @@ pretty = ""
 queue = []
 default_options = """[yt-dlp]
 download_directory=~/Downloads
-temp_download_directory=~/Downloads/yt-dlp-sc/
+temp_download_directory=~/Downloads/yt-dlp-sc
 yt_dlp_options=-f bv*[height<=1080][ext=mp4]+ba*[ext=m4a] -N 2
 use_temp_folder=False
 suppress_output=True
@@ -171,8 +172,8 @@ def load_options():
             prepend_line_to_file(config_file_path, "[yt-dlp]")
         else:
             config.read(config_file_path)
-            download_directory = config.get('yt-dlp', 'download_directory')
-            temp_download_directory = config.get('yt-dlp', 'temp_download_directory')
+            download_directory = os.path.expanduser(config.get('yt-dlp', 'download_directory'))
+            temp_download_directory = os.path.expanduser(config.get('yt-dlp', 'temp_download_directory'))
             yt_dlp_options = config.get('yt-dlp', 'yt_dlp_options')
             use_temp_folder = config.getboolean('yt-dlp', 'use_temp_folder')
             suppress_output = config.getboolean('yt-dlp', 'suppress_output')
@@ -183,8 +184,8 @@ def load_options():
     if is_same_as_default(config_file_path):
         print(is_same_as_default(config_file_path))
         config.read(config_file_path)
-        download_directory = config.get('yt-dlp', 'download_directory')
-        temp_download_directory = config.get('yt-dlp', 'temp_download_directory')
+        download_directory = os.path.expanduser(config.get('yt-dlp', 'download_directory'))
+        temp_download_directory = os.path.expanduser(config.get('yt-dlp', 'temp_download_directory'))
         yt_dlp_options = config.get('yt-dlp', 'yt_dlp_options')
         use_temp_folder = config.getboolean('yt-dlp', 'use_temp_folder')
         suppress_output = config.getboolean('yt-dlp', 'suppress_output')
@@ -212,12 +213,12 @@ def load_queue():
 # Saves the updated set_temp_folder to the options file
 def set_temp_directory_option(temp_folder_option):
     global use_temp_folder
-    if temp_folder_option.lower() == "y":
+    if temp_folder_option.lower() == "y" or temp_folder_option.lower() == "yes":
         use_temp_folder = True
         save_config()
         print(f"Temporary folder option is now {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
         return True
-    elif temp_folder_option.lower() == "n":
+    elif temp_folder_option.lower() == "n" or temp_folder_option.lower() == "no":
         use_temp_folder = False
         save_config()
         print(f"Temporary folder option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
@@ -228,11 +229,11 @@ def set_temp_directory_option(temp_folder_option):
 # Saves the debug option to the options file
 def set_debug(debug_option):
     global debug
-    if debug_option.lower() == "y":
+    if debug_option.lower() == "y" or debug_option.lower() == "yes":
         debug = True
         save_config()
         print(f"Debug option is now {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
-    elif debug_option.lower() == "n":
+    elif debug_option.lower() == "n" or debug_option.lower() == "no":
         debug = False
         save_config()
         print(f"Debug option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
@@ -242,11 +243,11 @@ def set_debug(debug_option):
 # Saves the pretty option to the options file
 def set_pretty(pretty_option):
     global pretty
-    if pretty_option.lower() == "y":
+    if pretty_option.lower() == "y" or pretty_option.lower() == "yes":
         pretty = True
         save_config()
         print(f"Pretty option is now {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
-    elif pretty_option.lower() == "n":
+    elif pretty_option.lower() == "n" or pretty_option.lower() == "no":
         pretty = False
         save_config()
         print(f"Pretty option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
@@ -256,12 +257,12 @@ def set_pretty(pretty_option):
 # Saves the suppress_output option to the options file
 def set_suppress_option(suppress_option):
     global suppress_output
-    if suppress_option.lower() == "y":
+    if suppress_option.lower() == "y" or suppress_option.lower() == "yes":
         suppress_output = True
         save_config()
         print(f"Suppress option is now {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
         return True
-    elif suppress_option.lower() == "n":
+    elif suppress_option.lower() == "n" or suppress_option.lower() == "no":
         suppress_output = False
         save_config()
         print(f"Suppress option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
@@ -273,14 +274,14 @@ def set_suppress_option(suppress_option):
 def set_temp_directory(directory):
     global temp_download_directory
     global download_directory
-    if directory == download_directory:
+    if os.path.expanduser(directory) == os.path.expanduser(download_directory):
         print(f"{bcolors.ERROR}Error: {bcolors.ENDC}Temporary download folder and destination download folder are the same. It is better to disable the temporary folder.")
         return
     if is_writable(directory):
-        temp_download_directory = directory
+        temp_download_directory = os.path.expanduser(directory)
         save_config()
-        print(f"Directory set to: {temp_download_directory}")
-    elif not is_writable(directory) and os.path.isdir(directory):
+        print(f"Directory set to: {os.path.expanduser(temp_download_directory)}")
+    elif not is_writable(os.path.expanduser(directory)) and os.path.isdir(os.path.expanduser(directory)):
         print(f"Specified directory does not have write permission.")
     else:
         print(f"Invalid directory. Please provide a valid path.")
@@ -290,14 +291,14 @@ def set_temp_directory(directory):
 def set_download_directory(directory):
     global temp_download_directory
     global download_directory
-    if directory == temp_download_directory:
+    if os.path.expanduser(directory) == os.path.expanduser(temp_download_directory):
         print(f"{bcolors.ERROR}Error: {bcolors.ENDC}Temporary download folder and destination download folder are the same.")
         print(f"It is better to disable the temporary folder.")
         return
     if is_writable(directory):
-        download_directory = directory
+        download_directory = os.path.expanduser(directory)
         save_config()
-        print(f"Download directory set to: {download_directory}")
+        print(f"Download directory set to: {os.path.expanduser(download_directory)}")
     elif not is_writable(directory) and os.path.isdir(directory):
         print(f"Specified directory does not have write permission.")
     else:
@@ -315,8 +316,8 @@ def set_yt_dlp_options(options):
 def save_config():
     with open(config_file_path, 'w') as f:
         f.write(f"[yt-dlp]\n")
-        f.write(f"download_directory={download_directory}\n")
-        f.write(f"temp_download_directory={temp_download_directory}\n")
+        f.write(f"download_directory={os.path.expanduser(download_directory)}\n")
+        f.write(f"temp_download_directory={os.path.expanduser(temp_download_directory)}\n")
         f.write(f"yt_dlp_options={yt_dlp_options}\n")
         f.write(f"use_temp_folder={use_temp_folder}\n")
         f.write(f"suppress_output={suppress_output}\n")
@@ -335,8 +336,9 @@ def clear_queue():
     archive_file = os.path.join(yt_dlp_folder, 'downloaded_videos.txt')
     
     # Clear the queue file
-    open(queue_file_path, 'w').close()  # Clear the queue file
-    print(f"Download queue cleared.")
+    open(queue_file_path, 'w').close()
+    if not suppress_output:
+        print(f"Download queue cleared.")
     
     # Remove temp download folder
     if os.path.exists(yt_dlp_folder):
@@ -349,7 +351,8 @@ def clear_queue():
                 dir_path = os.path.join(root, name)
                 print(f"Deleting temporary download folder")
                 shutil.rmtree(dir_path)
-        print(f"All contents in {yt_dlp_folder} cleared.")
+        if not suppress_output:
+            print(f"All contents in {yt_dlp_folder} cleared.")
     else:
         print(f"{yt_dlp_folder} does not exist.")
     
@@ -361,21 +364,44 @@ def clear_queue():
 # Prints the help menu
 def show_help():
     help_text = r"""  Commands:
-    - add <link>      : Add a link to the download queue.
-    - show            : Show the current download queue and settings.
-    - remove <index>  : Remove a link from the queue by index.
-    - setdir <path>   : Set the download directory.
-    - setdelay <min>  : Set the retry delay in minutes. *FEATURE HAS BEEN DISABLED*, see release 1.3.0 for notes.
-    - options "opts"  : Set yt-dlp options.
-    - start           : Start the download session.
-    - clear           : Clears the download queue manually.
-    - temp <y|n>      : Enables or disables the temporary download folder option.
-    - settemp <path>  : Sets the temporary download directory.
-    - supp <y|n>      : Enables or disables the yt-dlp output suppression, showing only the progress bar.
-    - pretty <y|n>    : Enables or disables the 'pretty' menu.
-    - help            : Show this help message.
-    - debug <y|n>     : Enables or disables debug output.
-    """
+
+    - show          : Show the current download queue and settings.
+    - start         : Start the download session.
+    - clear         : Clear the download queue manually.
+
+    -a, --add
+                    Add a link to the download queue.
+
+    -r, --remove
+                    Remove a link from the queue by index.
+
+    -d, --setdir
+                    Set the download directory.
+
+    -o, --options
+                    Set yt-dlp options.
+
+    -t, --temp
+                    Enables or disables the temporary download folder option.
+
+    -T, --tempdir
+                    Set the temporary download directory.
+
+    -s, -suppress
+                    Enables or disables the yt-dlp output suppression, showing only the progress bar.
+
+    -p, --pretty
+                    Enables or disables the 'pretty' menu.
+
+    -D, --debug
+                    Enables or disables debug output.
+
+    -v, --version
+                    Prints the program version.
+                    
+    -h, --help
+                    Show this help message.
+"""
     # Clears the terminal
     print(f"\033c")
     print(help_text)
@@ -465,6 +491,17 @@ def format_download_status(line):
         formatted_line = f"Downloading fragment {current_fragment}/{total_fragment} | ETA: {eta} at ~ {speed} | Video size ~ {total_size}"
         return formatted_line
 
+def format_merging_status(line):
+    # Extract the relevant information from the line
+    current_fragment, total_fragment, eta, speed, total_size, item_number, total_items = extract_download_details(line)
+
+    if str.isdigit(f"{item_number}") and str.isdigit(f"{total_items}"):
+        formatted_line = f"Merging Video and Audio files for video {item_number} of {total_items}."
+        return formatted_line
+    else:
+        formatted_line = f"Merging Video and Audio files"
+        return formatted_line
+
 # Starts the downloading of each link in queue, sequentially.
 def download_queue():
     global download_archive
@@ -486,98 +523,120 @@ def download_queue():
     if use_temp_folder:
         current_download_directory = os.path.expanduser(temp_download_directory)
         print(f"Temporary folder is {bcolors.COMPLETED}enabled{bcolors.ENDC}.")
-        print(f"{bcolors.OKSTATUS}Downloading to temporary folder:{bcolors.ENDC} {current_download_directory}")
-        print(f"{bcolors.OKSTATUS}Final download folder is:{bcolors.ENDC} {download_directory}\n")
+        print(f"{bcolors.OKSTATUS}Downloading to temporary folder:{bcolors.ENDC} {os.path.expanduser(current_download_directory)}")
+        print(f"{bcolors.OKSTATUS}Final download folder is:{bcolors.ENDC} {os.path.expanduser(download_directory)}\n")
+
+        # Check if the temporary download folder is the current target, and if it extsts
+        if os.path.expanduser("~/Downloads/yt-dlp-sc") in os.path.expanduser(current_download_directory) and not os.path.isdir(os.path.expanduser(current_download_directory)):
+            # If the default temporary download folder does not exist, try to create it
+            if debug:
+                print(f"Default temporary folder does not exist. Creating {os.path.expanduser(current_download_directory)}")
+            if os.access(os.path.expanduser(current_download_directory), os.W_OK):
+                os.makedirs(os.path.expanduser("~/Downloads/yt-dlp-sc/"))
+            # If the ~/Downloads folder is not writable, throw an error.
+            elif not os.access(os.path.expanduser(current_download_directory), os.W_OK):
+                if debug:
+                    print(f"DEBUG Error 40: Unable to write to ~/Downloads")
+                    return
+        # If the status of the ~/Downloads folder cannot be accessed.
+        else:
+            if debug:
+                print(f"DEBUG Error 41: Unable to access ~/Downloads")
+                return
 
     else:
         # Use final directory if temp folder is not enabled
         current_download_directory = os.path.expanduser(download_directory)
         print(f"Temporary folder is {bcolors.OKRED}disabled{bcolors.ENDC}.")
-        print(f"{bcolors.OKSTATUS}Downloading directly to final directory:{bcolors.ENDC} {current_download_directory}\n")
+        print(f"{bcolors.OKSTATUS}Downloading directly to final directory:{bcolors.ENDC} {os.path.expanduser(current_download_directory)}\n")
 
     while queue:
         # Get the first link from the queue
         link = queue[0]
               
         print(f"{bcolors.OKSTATUS}Checking Queue URL:{bcolors.ENDC} {link}")
-        if "www.youtube.com/" not in link:
-            print(f"URL is not from Youtube, removing from queue.\n")
-            queue.pop(0)
-            save_queue()
-        else:
+        if "www.youtube.com/" in link:
             print(f"{bcolors.COMPLETED}URL looks like it belongs to Youtube.{bcolors.ENDC}\n")
             print(f"{bcolors.OKSTATUS}Checking responsiveness{bcolors.ENDC}")
-        
-        if not check_ping(link):
+            link_valid = True
+            if check_ping(link):
+                print(f"{bcolors.COMPLETED}URL is responsive. Proceeding with download.{bcolors.ENDC}\n")
+
+                link_responsive = True
+            elif not check_ping(link):
+                print(f"{bcolors.ERROR}Removing URL:{bcolors.ENDC} {link}\n")
+                link_responsive = False
+                queue.pop(0)
+                save_queue()
+        elif "www.youtube.com/" not in link:
             print(f"{bcolors.ERROR}Removing URL:{bcolors.ENDC} {link}\n")
+            link_valid = False
             queue.pop(0)
             save_queue()
-            continue
 
-        print(f"{bcolors.COMPLETED}URL is responsive. Proceeding with download{bcolors.ENDC}\n")            
+        if link_valid and link_responsive:
+            if use_temp_folder:
+                download_archive = f"{os.path.expanduser(current_download_directory)}/downloaded_videos.txt"
+                command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
+                if debug:
+                    print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+                    print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
 
-        if use_temp_folder:
-            download_archive = f"{current_download_directory}/downloaded_videos.txt"
-            command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
-            print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
-            print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
-        elif not use_temp_folder:
-            command = ["yt-dlp"] + yt_dlp_options.split() + [link]
-            print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
-            print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
-            
-        if suppress_output:
-            initial_panel = Panel("Starting Download...", border_style="green")
-            with Live(initial_panel, refresh_per_second = 1) as live:
+            elif not use_temp_folder:
+                command = ["yt-dlp"] + yt_dlp_options.split() + [link]
+                if debug:
+                    print(f"{bcolors.OKSTATUS}Command (pretty):{bcolors.ENDC} {" ".join(command)}\n")
+                    print(f"{bcolors.OKSTATUS}Command (raw):{bcolors.ENDC} {command}\n")
+
+            if suppress_output:
+                initial_panel = Panel("Fetching download information", border_style="green")
+                with Live(initial_panel, refresh_per_second = 5) as live:
+                    try:
+                        process = subprocess.Popen(
+                            command,
+                            cwd=os.path.expanduser(current_download_directory),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            text=True,
+                        )
+
+                        panel = Panel("Downloading...", border_style="green")
+                        live.update(initial_panel)
+
+                        # Process yt-dlp output in real-time
+                        for line in process.stdout:
+                            if ("[download]" in line and "%" in line and "ETA" in line) or ("Downloading item" in line):
+                                formatted_line = format_download_status(line)
+                                panel = Panel(formatted_line, title = "Download Progress", border_style = "cyan")
+                                live.update(panel)
+                            if "[Merger]" in line and "Merging" in line:
+                                formatted_line = format_merging_status(line)
+                                panel = Panel(formatted_line, title = "Download Progress", border_style = "blue")
+                                live.update(panel)
+
+                        print(f"{bcolors.COMPLETED}Finished downloading:{bcolors.ENDC} {link}\n")
+                        queue.pop(0)
+                        save_queue()
+
+                    except subprocess.CalledProcessError as e:
+                        stderr_output = e.stderr.decode().strip()
+                        print(f"{bcolors.ERROR}Error occurred while downloading: {stderr_output}{bcolors.ENDC}")
+                        break
+
+            elif not suppress_output:
                 try:
-                    process = subprocess.Popen(
-                        command,
-                        cwd=os.path.expanduser(current_download_directory),
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                    )
-
-                    panel = Panel("Downloading...", border_style="green")
-                    live.update(initial_panel)
-
-                    # Process yt-dlp output in real-time
-                    for line in process.stdout:
-                        if ("[download]" in line and "%" in line and "ETA" in line) or ("Downloading item" in line):
-                            formatted_line = format_download_status(line)
-                            panel = Panel(formatted_line, title = "Download Progress", border_style = "cyan")
-                            live.update(panel)
-                        if "[Merger]" in line and "Merging" in line:
-                            formatted_line = f"Merging files into final file"
-                            panel = Panel(formatted_line, title = "Download Progress", border_style = "blue")
-                            live.update(panel)
-                        if "Deleting original file" in line:
-                            formatted_line = f"Completed Video Download"
-                            panel = Panel(formatted_line, title = "Download Progress", border_style = "green")
-
+                    subprocess.run(command, check=True, cwd=os.path.expanduser(current_download_directory), stderr=subprocess.PIPE)
                     print(f"{bcolors.COMPLETED}Finished downloading:{bcolors.ENDC} {link}\n")
                     queue.pop(0)
                     save_queue()
-
                 except subprocess.CalledProcessError as e:
                     stderr_output = e.stderr.decode().strip()
                     print(f"{bcolors.ERROR}Error occurred while downloading: {stderr_output}{bcolors.ENDC}")
-                    break
+                    break        
 
-        elif not suppress_output:
-            try:
-                subprocess.run(command, check=True, cwd=os.path.expanduser(current_download_directory), stderr=subprocess.PIPE)
-                print(f"{bcolors.COMPLETED}Finished downloading:{bcolors.ENDC} {link}\n")
-                queue.pop(0)
-                save_queue()
-            except subprocess.CalledProcessError as e:
-                stderr_output = e.stderr.decode().strip()
-                print(f"{bcolors.ERROR}Error occurred while downloading: {stderr_output}{bcolors.ENDC}")
-                break        
-
-    # Move files from temp folder to final directory if temp folder was used
-    if use_temp_folder:
-        move_files_to_final_directory(temp_download_directory)
+            # Move files from temp folder to final directory if temp folder was used
+            if use_temp_folder:
+                move_files_to_final_directory(os.path.expanduser(temp_download_directory))
 
 # Moves all files in the temporary download directory to the proper download folder.
 def move_files_to_final_directory(temp_dir):
@@ -585,7 +644,8 @@ def move_files_to_final_directory(temp_dir):
     if not temporary_directory:
         print(f"No files found in {os.path.expanduser(temp_dir)} after download.")
         return
-    print(f"{os.path.expanduser(temp_dir)}/downloaded_videos.txt")
+    if debug:
+        print(f"Removing archive file at {os.path.expanduser(temp_dir)}downloaded_videos.txt")
     # Move each file to the proper download directory
     for filename in temporary_directory:
         if "downloaded_videos.txt" in filename:
@@ -594,10 +654,17 @@ def move_files_to_final_directory(temp_dir):
             temp_file_path = os.path.join(os.path.expanduser(temp_dir), filename)
             global download_directory
             final_file_path = os.path.join(os.path.expanduser(download_directory), filename)
-            print(f"Moving {temp_file_path} to {final_file_path}")
+            if not suppress_output:
+                print(f"Moving {temp_file_path} to {final_file_path}")
             shutil.move(temp_file_path, final_file_path)
     clear_queue()
-    print(f"All downloaded files have been moved to the final directory.")
+    if os.path.expanduser("~/Downloads/yt-dlp-sc") in os.path.expanduser(temp_dir):
+        os.rmdir(temp_dir)
+        if debug:
+            print(f"Removed empty directory at {os.path.expanduser(temp_dir)}")
+
+    if not suppress_output:
+        print(f"All downloaded files have been moved to the final directory.")
 
 # Prints the current settings and links in queue
 def show_settings():
@@ -609,18 +676,18 @@ def show_settings():
     if download_directory == "~" and yt_dlp_options == "":
         write_default_options()
         if download_directory == "~" and yt_dlp_options == "":
-            if debug:
+            if not suppress_output:
                 print(f"  {bcolors.ERROR}DEBUG Error 20:{bcolors.ENDC} Program is not seeing default options file, generation seemingly failed.\n")
 
     # ASCII Art
     art = r"""
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        _                  _ _                                   ___   __    ___      ┃
-┃       | |                | | |                                 |__ \ /_ |  / _ \     ┃
-┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   __ ) | | | | | | |    ┃
-┃ | | | | __| |______|  / _` | | '_ \  |______| / __|/ __|  \ \ / // /  | | | | | |    ┃
-┃ | |_| | |_           | (_| | | |_) |          \__ | (__    \ V // /_  | | | |_| |    ┃
-┃  \__, |\__|           \__,_|_| .__/           |___/\___|    \_/|____()|_|()\___/     ┃
+┃        _                  _ _                                   ___    ___    ___    ┃
+┃       | |                | | |                                 |__ \  |__ \  / _ \   ┃
+┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   __ ) |    ) || | | |  ┃
+┃ | | | | __| |______|  / _` | | '_ \  |______| / __|/ __|  \ \ / // /    / / | | | |  ┃
+┃ | |_| | |_           | (_| | | |_) |          \__ | (__    \ V // /_   / /_ | |_| |  ┃
+┃  \__, |\__|           \__,_|_| .__/           |___/\___|    \_/|____()|____()\___/   ┃
 ┃   __/ |                      | |                                                     ┃
 ┃  |___/                       |_|                                                     ┃
 ┃                                                By: DredBaron 🯆                       ┃
@@ -636,12 +703,12 @@ def show_settings():
 
     # Download directory
     print(f"  {bcolors.UNDERLINE}Download directory is:{bcolors.ENDC}")
-    print(f"  {bcolors.OKBLUE}{download_directory}{bcolors.ENDC}\n")
+    print(f"  {bcolors.OKBLUE}{os.path.expanduser(download_directory)}{bcolors.ENDC}\n")
     
     # Temporary directory
     print(f"  {bcolors.UNDERLINE}Temporary download folder is:{bcolors.ENDC}")
     if use_temp_folder:
-        print(f"  {bcolors.OKBLUE}{temp_download_directory}{bcolors.ENDC}\n")
+        print(f"  {bcolors.OKBLUE}{os.path.expanduser(temp_download_directory)}{bcolors.ENDC}\n")
     elif not use_temp_folder:
         print(f"  {bcolors.OKRED}Disabled\n{bcolors.ENDC}")
     else:
@@ -693,9 +760,9 @@ def main():
         return
     
     # Add command
-    elif command == 'add':
+    elif command == '-a' or command == '--add':
         if len(sys.argv) < 3:
-            print(f"Please provide a link to add.")
+            print(f"Usage: -a/--add <link>")
             return
         add_to_queue(sys.argv[2])
 
@@ -704,9 +771,9 @@ def main():
         show_settings()
 
     # Remove command
-    elif command == 'remove':
+    elif command == '-r' or command == '--remove':
         if len(sys.argv) < 3:
-            print(f"Please provide the index to remove.")
+            print(f"Usage: -r/--remove <index>")
             return
         try:
             index = int(sys.argv[2])
@@ -715,37 +782,31 @@ def main():
             print(f"Invalid index")
 
     # Setdir command
-    elif command == 'setdir':
+    elif command == '-d' or command == '--dir':
         if len(sys.argv) < 3:
-            print(f"Please provide a directory.")
+            print(f"Usage: -d/--dir <directory path>")
             return
-        set_download_directory(sys.argv[2])
+        set_download_directory(os.path.expanduser(sys.argv[2]))
 
-    # Settemp command
-    elif command == 'settemp':
+    # Tempdir command
+    elif command == '-T' or command == '--tempdir':
         if len(sys.argv) < 3:
-            print(f"Please provide a directory.")
+            print(f"Usage: -T/--tempdir <directory>")
             return
-        set_temp_directory(sys.argv[2])
+        set_temp_directory(os.path.expanduser(sys.argv[2]))
 
     # Supp command
-    elif command == 'supp':
-        if len(sys.argv) > 1 and sys.argv[1] == "supp":
+    elif command == '-s' or command == '--suppress':
+        if len(sys.argv) > 1 and (sys.argv[1] == '-s' or sys.argv[1] == '--suppress'):
             if len(sys.argv) == 3:
                 set_suppress_option(sys.argv[2])
             else:
-                print(f"Usage: supp <y|n>")
-
-    # Setdelay command
-    elif command == 'setdelay':
-        if len(sys.argv) < 3:
-            print(f"{bcolors.ERROR}This option is currently a W.I.P. Will not do anything.{bcolors.ENDC}")
-            return
+                print(f"Usage: -s/--suppress <y|n>")
         
     # Options command    
-    elif command == 'options':
+    elif command == '-o' or command == '--options':
         if len(sys.argv) < 3:
-            print(f"Please provide yt-dlp compatable options.")
+            print(f"Usage: -o/--options <yt-dlp options>")
             return
         set_yt_dlp_options(" ".join(sys.argv[2:]))
     
@@ -757,31 +818,31 @@ def main():
         download_queue()
 
     # Temp command
-    elif command == 'temp':
-        if len(sys.argv) > 1 and sys.argv[1] == "temp":
+    elif command == '-t' or command == '--temp':
+        if len(sys.argv) > 1 and (sys.argv[1] == "-t" or sys.argv[1] == "--temp"):
             if len(sys.argv) == 3:
                 set_temp_directory_option(sys.argv[2])
             else:
-                print(f"Usage: temp <y|n>")
+                print(f"Usage: -t/--temp <y|n>")
 
     # Debug command
-    elif command == 'debug':
-        if len(sys.argv) > 1 and sys.argv[1] == 'debug':
+    elif command == '-D' or command == '--debug':
+        if len(sys.argv) > 1 and (sys.argv[1] == '-D' or sys.argv[1] == '--debug'):
             if len(sys.argv) == 3:
                 set_debug(sys.argv[2])
             else:
-                print(f"Usage: debug <y|n>")
+                print(f"Usage: -D/--debug <y|n>")
 
     # Pretty command
-    elif command == 'pretty':
+    elif command == '-p' or command == '--pretty':
         if len(sys.argv) > 1 and sys.argv[1] == 'pretty':
-            if len(sys.argv) == 3:
+            if len(sys.argv) > 1 and (sys.argv[1] == '-dp' or sys.argv[1] == '--pretty'):
                 set_pretty(sys.argv[2])
             else:
-                print(f"Usage: pretty <y|n>")
+                print(f"Usage: -p/--pretty <y|n>")
 
     # Help command
-    elif command == 'help':
+    elif command == '-h' or command == '--help':
         show_help()
 
     # Version command
@@ -793,7 +854,6 @@ def main():
     # Unknown command
     else:
         print(f"Unknown command: {command}")
-        show_help()
 
 if __name__ == '__main__':
     main()
