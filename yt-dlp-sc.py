@@ -223,7 +223,7 @@ def set_temp_directory_option(temp_folder_option):
         print(f"Temporary folder option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
         return False
     else:
-        print(f"Usage: temp <y|n>")
+        print(f"Usage: -t/--temp <directory>")
 
 # Saves the debug option to the options file
 def set_debug(debug_option):
@@ -237,7 +237,7 @@ def set_debug(debug_option):
         save_config()
         print(f"Debug option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
     else:
-        print(f"Usage: debug <y|n>")
+        print(f"Usage: -D/--debug <y|n>")
 
 # Saves the pretty option to the options file
 def set_pretty(pretty_option):
@@ -251,7 +251,7 @@ def set_pretty(pretty_option):
         save_config()
         print(f"Pretty option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
     else:
-        print(f"Usage: pretty <y|n>")
+        print(f"Usage: -p/--pretty <y|n>")
 
 # Saves the suppress_output option to the options file
 def set_suppress_option(suppress_option):
@@ -267,7 +267,7 @@ def set_suppress_option(suppress_option):
         print(f"Suppress option is now {bcolors.OKRED}disabled{bcolors.ENDC}.")
         return False
     else:
-        print(f"Usage: supp <y|n>")
+        print(f"Usage: -s/-suppress <y|n>")
 
 # Saves the updated temp_directory_option to the options file
 def set_temp_directory(directory):
