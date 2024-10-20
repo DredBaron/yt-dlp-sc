@@ -11,6 +11,8 @@ INSTALLATION:
 
   ```make install```
 
+This project also requires that yt-dlp is installed.
+
 CONFIGURATION:
   
   There are two files which are created for use with the program. The files are created in ```~/.config/yt-dlp-sc``` and are ```options.conf``` and ```queue.txt```. The ```options.conf``` file is where custom
