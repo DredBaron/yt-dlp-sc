@@ -9,7 +9,6 @@ import configparser
 import shutil
 import requests
 import re
-from yt_dlp import YoutubeDL
 
 # Text colors
 class bcolors:
