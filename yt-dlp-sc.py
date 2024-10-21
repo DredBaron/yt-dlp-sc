@@ -27,7 +27,7 @@ queue_file_path = os.path.expanduser("~/.config/yt-dlp-sc/queue.txt")
 config = configparser.ConfigParser()
 
 # Initialize global variables
-yt_dlp_sc_version = "2.1.0"
+yt_dlp_sc_version = "2.2.1"
 download_directory = "~"
 temp_download_directory = "~"
 use_temp_folder = ""
@@ -525,24 +525,6 @@ def download_queue():
         print(f"{bcolors.OKSTATUS}Downloading to temporary folder:{bcolors.ENDC} {os.path.expanduser(current_download_directory)}")
         print(f"{bcolors.OKSTATUS}Final download folder is:{bcolors.ENDC} {os.path.expanduser(download_directory)}\n")
 
-        # Check if the temporary download folder is the current target, and if it extsts
-        if os.path.expanduser("~/Downloads/yt-dlp-sc") in os.path.expanduser(current_download_directory) and not os.path.isdir(os.path.expanduser(current_download_directory)):
-            # If the default temporary download folder does not exist, try to create it
-            if debug:
-                print(f"Default temporary folder does not exist. Creating {os.path.expanduser(current_download_directory)}")
-            if os.access(os.path.expanduser("~/Downloads"), os.W_OK):
-                os.makedirs(os.path.expanduser("~/Downloads/yt-dlp-sc/"))
-            # If the ~/Downloads folder is not writable, throw an error.
-            elif not os.access(os.path.expanduser("~/Downloads"), os.W_OK):
-                if debug:
-                    print(f"DEBUG Error 40: Unable to write to ~/Downloads")
-                    return
-        # If the status of the ~/Downloads folder cannot be accessed.
-        else:
-            if debug:
-                print(f"DEBUG Error 41: Unable to access ~/Downloads")
-                return
-
     else:
         # Use final directory if temp folder is not enabled
         current_download_directory = os.path.expanduser(download_directory)
@@ -575,6 +557,19 @@ def download_queue():
 
         if link_valid and link_responsive:
             if use_temp_folder:
+                # Check if the temporary download folder is the current target, and if it extsts
+                if os.path.expanduser("~/Downloads/yt-dlp-sc") in os.path.expanduser(current_download_directory) and not os.path.isdir(os.path.expanduser(current_download_directory)):
+                    # If the default temporary download folder does not exist, try to create it
+                    if debug:
+                        print(f"Default temporary folder does not exist. Creating at {os.path.expanduser(current_download_directory)} for this download, then removing.")
+                    if os.access(os.path.expanduser("~/Downloads"), os.W_OK):
+                        os.makedirs(os.path.expanduser("~/Downloads/yt-dlp-sc/"))
+                    # If the ~/Downloads folder is not writable, throw an error.
+                    elif not os.access(os.path.expanduser("~/Downloads"), os.W_OK):
+                        if debug:
+                            print(f"DEBUG Error 40: Unable to write to ~/Downloads")
+                            return
+
                 download_archive = f"{os.path.expanduser(current_download_directory)}/downloaded_videos.txt"
                 command = ["yt-dlp", "--download-archive", download_archive] + yt_dlp_options.split() + [link]
                 if debug:
@@ -636,6 +631,8 @@ def download_queue():
             # Move files from temp folder to final directory if temp folder was used
             if use_temp_folder:
                 move_files_to_final_directory(os.path.expanduser(temp_download_directory))
+        if os.path.expanduser("~/Downloads/yt-dlp-sc") in os.path.expanduser(temp_download_directory) and os.path.isdir(os.path.expanduser(temp_download_directory)):
+            os.rmdir(temp_download_directory)
 
 # Moves all files in the temporary download directory to the proper download folder.
 def move_files_to_final_directory(temp_dir):
@@ -681,12 +678,12 @@ def show_settings():
     # ASCII Art
     art = r"""
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        _                  _ _                                   ___    ___    ___    ┃
-┃       | |                | | |                                 |__ \  |__ \  / _ \   ┃
-┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   __ ) |    ) || | | |  ┃
-┃ | | | | __| |______|  / _` | | '_ \  |______| / __|/ __|  \ \ / // /    / / | | | |  ┃
-┃ | |_| | |_           | (_| | | |_) |          \__ | (__    \ V // /_   / /_ | |_| |  ┃
-┃  \__, |\__|           \__,_|_| .__/           |___/\___|    \_/|____()|____()\___/   ┃
+┃        _                  _ _                                   ___   ___   __       ┃
+┃       | |                | | |                                 |__ \ |__ \ /_ |      ┃
+┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   __ ) |   ) | | |      ┃
+┃ | | | | __| |______|  / _` | | '_ \  |______| / __|/ __|  \ \ / // /   / /  | |      ┃
+┃ | |_| | |_           | (_| | | |_) |          \__ | (__    \ V // /_  / /_  | |      ┃
+┃  \__, |\__|           \__,_|_| .__/           |___/\___|    \_/|____()____()|_|      ┃
 ┃   __/ |                      | |                                                     ┃
 ┃  |___/                       |_|                                                     ┃
 ┃                                                By: DredBaron 🯆                       ┃
