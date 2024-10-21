@@ -107,7 +107,7 @@ OPTIONS:
 
   ```-D, --debug``` - Enables or disables debug error output, and whether the screen clears on UI refresh.
 
-  ```--version``` - Displays the program version. Not in the help menu yet, but it is a vailid command option as of 2.1.0
+  ```--version``` - Displays the program version.
   
   ```-h, --help``` - Shows the help menu.
 
