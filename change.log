@@ -6,10 +6,7 @@ ADDITIONS:
 
 FUTURE RELEASE PLANS:
 
-* Move the folder delete line for removing the folder `~/Downloads/yt-dlp-sc` somewhere deeper in the if/then to make sure it only creates/removes the folder when files are involved. It
-    currently creates the folder and does not remove it, even if a video fails the URL VAL/RES test.
-
-* Add ability to parse multiple command optins in one command.
+* Add ability to parse multiple command options in one command.
 
 * Show video title somewhere during downloading
 
