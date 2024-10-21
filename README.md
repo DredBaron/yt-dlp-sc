@@ -40,7 +40,7 @@ USAGE:
     -o, --options
                     Set yt-dlp options.
 
-    
+    -t, --temp
                     Enables or disables the temporary download folder option.
 
     -T, --tempdir
