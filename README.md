@@ -113,7 +113,7 @@ OPTIONS:
 
 FUTURE RELEASE PLANS:
 
-* Add ability to parse multiple command optins in one command.
+* Add ability to parse multiple command options in one command.
 
 * Show video title somewhere during downloading
 
