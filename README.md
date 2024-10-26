@@ -1,3 +1,6 @@
+yt-dlp-sc
+=============
+  
   yt-dlp-sc is a Python script constructed to help with [yt-dlp](https://github.com/yt-dlp/yt-dlp) automation.
 
 >[!WARNING]
