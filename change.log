@@ -1,6 +1,6 @@
 ADDITIONS:
 
-* Updated folder removal for default temporary directory. Folder at `~/Downloads/yt-dlp-sc` is automatically created when a download passes VAL/RES test, and is removed after all files are moved to the final download directory.
+* Added progress reporter for downloading audio, video and audio files now have separate outputs when `--suppress` is enabled.
 
 * Updated ASCII art to reflect new version number.
 

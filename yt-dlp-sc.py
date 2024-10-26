@@ -27,7 +27,7 @@ queue_file_path = os.path.expanduser("~/.config/yt-dlp-sc/queue.txt")
 config = configparser.ConfigParser()
 
 # Initialize global variables
-yt_dlp_sc_version = "2.2.1"
+yt_dlp_sc_version = "2.2.2"
 download_directory = "~"
 temp_download_directory = "~"
 use_temp_folder = ""
@@ -479,15 +479,24 @@ def extract_download_details(line):
 
     return current_fragment, total_fragment, eta, speed, total_size, item_number, total_items
 
-def format_download_status(line):
-    # Extract the relevant information from the line
+def format_video_download_status(line):
     current_fragment, total_fragment, eta, speed, total_size, item_number, total_items = extract_download_details(line)
 
     if str.isdigit(f"{item_number}") and str.isdigit(f"{total_items}"):
-        formatted_line = f"Downloading fragment {current_fragment}/{total_fragment} | ETA: {eta} at ~ {speed} | Video {item_number} of {total_items} size ~ {total_size}"
+        formatted_line = f"Downloading Video fragment {current_fragment}/{total_fragment} | ETA: {eta} at ~ {speed} | Video {item_number} of {total_items} size ~ {total_size}"
         return formatted_line
     else:
-        formatted_line = f"Downloading fragment {current_fragment}/{total_fragment} | ETA: {eta} at ~ {speed} | Video size ~ {total_size}"
+        formatted_line = f"Downloading Video fragment {current_fragment}/{total_fragment} | ETA: {eta} at ~ {speed} | Video size ~ {total_size}"
+        return formatted_line
+
+def format_audio_download_status(line):
+    current_fragment, total_fragment, eta, speed, total_size, item_number, total_items = extract_download_details(line)
+
+    if str.isdigit(f"{item_number}") and str.isdigit(f"{total_items}"):
+        formatted_line = f"Downloading Audio | ETA: {eta} at ~ {speed} | Audio {item_number} of {total_items} size ~ {total_size}"
+        return formatted_line
+    else:
+        formatted_line = f"Downloading Audio | ETA: {eta} at ~ {speed} | Video size ~ {total_size}"
         return formatted_line
 
 def format_merging_status(line):
@@ -600,7 +609,11 @@ def download_queue():
                         # Process yt-dlp output in real-time
                         for line in process.stdout:
                             if ("[download]" in line and "%" in line and "ETA" in line) or ("Downloading item" in line):
-                                formatted_line = format_download_status(line)
+                                formatted_line = format_video_download_status(line)
+                                panel = Panel(formatted_line, title = "Download Progress", border_style = "cyan")
+                                live.update(panel)
+                            if ("[download]" in line and "%" in line and "ETA" in line and not "frag" in line):
+                                formatted_line = format_audio_download_status(line)
                                 panel = Panel(formatted_line, title = "Download Progress", border_style = "cyan")
                                 live.update(panel)
                             if "[Merger]" in line and "Merging" in line:
@@ -678,12 +691,12 @@ def show_settings():
     # ASCII Art
     art = r"""
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃        _                  _ _                                   ___   ___   __       ┃
-┃       | |                | | |                                 |__ \ |__ \ /_ |      ┃
-┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   __ ) |   ) | | |      ┃
-┃ | | | | __| |______|  / _` | | '_ \  |______| / __|/ __|  \ \ / // /   / /  | |      ┃
-┃ | |_| | |_           | (_| | | |_) |          \__ | (__    \ V // /_  / /_  | |      ┃
-┃  \__, |\__|           \__,_|_| .__/           |___/\___|    \_/|____()____()|_|      ┃
+┃        _                  _ _                                   ___   ___   ___      ┃
+┃       | |                | | |                                 |__ \ |__ \ |__ \     ┃
+┃  _   _| |_   ______    __| | |_ __    ______   ___  ___   __   __ ) |   ) |   ) |    ┃
+┃ | | | | __| |______|  / _` | | '_ \  |______| / __|/ __|  \ \ / // /   / /   / /     ┃
+┃ | |_| | |_           | (_| | | |_) |          \__ | (__    \ V // /_  / /_  / /_     ┃
+┃  \__, |\__|           \__,_|_| .__/           |___/\___|    \_/|____()____()____|    ┃
 ┃   __/ |                      | |                                                     ┃
 ┃  |___/                       |_|                                                     ┃
 ┃                                                By: DredBaron 🯆                       ┃
