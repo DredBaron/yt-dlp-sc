@@ -1,6 +1,8 @@
 ADDITIONS:
 
-* Added progress reporter for downloading audio, video and audio files now have separate outputs when `--suppress` is enabled.
+* Bugfixed the `-p / --pretty` option.
+
+* Bugfixed the `-v/--version` option
 
 * Updated ASCII art to reflect new version number.
 
