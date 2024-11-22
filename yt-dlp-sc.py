@@ -75,7 +75,7 @@ def is_same_as_default(compare):
         if file1_lines[i] != file2_lines[i]:
             compare_content.close()
             return False
-        
+
         elif file1_lines[i] == file2_lines[i]:
             compare_content.close()
             return True
@@ -114,7 +114,7 @@ def prepend_line_to_file(file_path, line):
     # Read the existing contents of the file
     with open(file_path, 'r') as f:
         content = f.readlines()
-    
+
     # Prepend the new line to the content
     content.insert(0, line + '\n')  # Add a newline at the end of the line
 
@@ -143,7 +143,7 @@ def write_default_options():
     # ~/.config/yt-dlp-sc does not exist. Throwing 'Does Not Exist' error and creating directory and config folder inside.
     elif not os.path.exists(os.path.expanduser("~/.config/yt-dlp-sc/")):
         if debug:
-            print(f"{bcolors.ERROR}DEBUG Error 03:{bcolors.ENDC} ~/.config/yt-dlp-sc does not exist. Attempting to create and populate.")        
+            print(f"{bcolors.ERROR}DEBUG Error 03:{bcolors.ENDC} ~/.config/yt-dlp-sc does not exist. Attempting to create and populate.")
         create_yt_dlp_sc_folder()
         create_config()
 
@@ -151,7 +151,7 @@ def write_default_options():
     elif not os.access(os.path.expanduser("~/.config/"), os.W_OK):
         print(f"{bcolors.ERROR}Error:{bcolors.ENDC} ~/.config either does not exist, or cannot be written to.")
         return
-    
+
     # Load options into memory
     load_options()
 
@@ -333,12 +333,12 @@ def save_queue():
 def clear_queue():
     yt_dlp_folder = os.path.expanduser(temp_download_directory)
     archive_file = os.path.join(yt_dlp_folder, 'downloaded_videos.txt')
-    
+
     # Clear the queue file
     open(queue_file_path, 'w').close()
     if not suppress_output:
         print(f"Download queue cleared.")
-    
+
     # Remove temp download folder
     if os.path.exists(yt_dlp_folder):
         for root, dirs, files in os.walk(yt_dlp_folder, topdown=False):
@@ -354,7 +354,7 @@ def clear_queue():
             print(f"All contents in {yt_dlp_folder} cleared.")
     else:
         print(f"{yt_dlp_folder} does not exist.")
-    
+
     # Delete the archive file
     if os.path.exists(archive_file):
         os.remove(archive_file)
@@ -397,7 +397,7 @@ def show_help():
 
     -v, --version
                     Prints the program version.
-                    
+
     -h, --help
                     Show this help message.
 """
@@ -447,7 +447,7 @@ def check_ping(url):
         return False
 
 def contains_substring(main_string, substring):
-    
+
     return substring in main_string
 
 item_number = "?"
@@ -520,7 +520,7 @@ def download_queue():
 
     # CLears the terminal
     print(f"\033c")
-    
+
     # Check if the suppress option is enabled
     if suppress_output:
         print(f"Suppression is {bcolors.COMPLETED}enabled{bcolors.ENDC}.\n")
@@ -543,7 +543,7 @@ def download_queue():
     while queue:
         # Get the first link from the queue
         link = queue[0]
-              
+
         print(f"{bcolors.OKSTATUS}Checking Queue URL:{bcolors.ENDC} {link}")
         if "www.youtube.com/" in link:
             print(f"{bcolors.COMPLETED}URL looks like it belongs to Youtube.{bcolors.ENDC}\n")
@@ -639,7 +639,7 @@ def download_queue():
                 except subprocess.CalledProcessError as e:
                     stderr_output = e.stderr.decode().strip()
                     print(f"{bcolors.ERROR}Error occurred while downloading: {stderr_output}{bcolors.ENDC}")
-                    break        
+                    break
 
             # Move files from temp folder to final directory if temp folder was used
             if use_temp_folder:
@@ -713,7 +713,7 @@ def show_settings():
     # Download directory
     print(f"  {bcolors.UNDERLINE}Download directory is:{bcolors.ENDC}")
     print(f"  {bcolors.OKBLUE}{os.path.expanduser(download_directory)}{bcolors.ENDC}\n")
-    
+
     # Temporary directory
     print(f"  {bcolors.UNDERLINE}Temporary download folder is:{bcolors.ENDC}")
     if use_temp_folder:
@@ -722,7 +722,7 @@ def show_settings():
         print(f"  {bcolors.OKRED}Disabled\n{bcolors.ENDC}")
     else:
         print(f"  {bcolors.ERROR}Temporary download folder is not set.{bcolors.ENDC}\n")
-    
+
     # yt-dlp options
     print(f"  {bcolors.UNDERLINE}yt-dlp options are:{bcolors.ENDC}")
     print(f"  {bcolors.OKBLUE}{yt_dlp_options}{bcolors.ENDC}\n")
@@ -761,13 +761,13 @@ def main():
     if len(sys.argv) < 2:
         show_settings()
         return
-    
+
     # Clear command
     command = sys.argv[1]
     if len(sys.argv) > 1 and sys.argv[1] == "clear":
         clear_queue()
         return
-    
+
     # Add command
     elif command == '-a' or command == '--add':
         if len(sys.argv) < 3:
@@ -811,14 +811,14 @@ def main():
                 set_suppress_option(sys.argv[2])
             else:
                 print(f"Usage: -s/--suppress <y|n>")
-        
-    # Options command    
+
+    # Options command
     elif command == '-o' or command == '--options':
         if len(sys.argv) < 3:
             print(f"Usage: -o/--options <yt-dlp options>")
             return
         set_yt_dlp_options(' '.join(sys.argv[2:]))
-    
+
     # Start command
     elif command == 'start':
         if not queue:
@@ -844,8 +844,8 @@ def main():
 
     # Pretty command
     elif command == '-p' or command == '--pretty':
-        if len(sys.argv) > 1 and sys.argv[1] == 'pretty':
-            if len(sys.argv) > 1 and (sys.argv[1] == '-dp' or sys.argv[1] == '--pretty'):
+        if len(sys.argv) > 1 and (sys.argv[1] == '-p' or sys.argv[1] == '--pretty'):
+            if len(sys.argv) == 3:
                 set_pretty(sys.argv[2])
             else:
                 print(f"Usage: -p/--pretty <y|n>")
